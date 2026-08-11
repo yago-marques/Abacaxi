@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // empty' | { read -r f; if [[ \"$f\" == *.swift ]]; then out=\"$(\"./Scripts/on-write-code-check.sh\" \"$f\" 2>&1)\"; jq -n --arg msg \"$out\" '{systemMessage: $msg, hookSpecificOutput: {hookEventName: \"PostToolUse\", additionalContext: $msg}}'; fi; }",
+            "statusMessage": "onWriteCode: running SwiftLint + CODE_STYLE.md check",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

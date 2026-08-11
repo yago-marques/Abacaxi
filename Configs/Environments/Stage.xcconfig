@@ -1,0 +1,5 @@
+// Stage environment values — applies to any brand.
+
+BUNDLE_ID_SUFFIX = .stage
+API_SUBDOMAIN_PREFIX = stage-
+ENABLE_DEBUG_MENU = YES

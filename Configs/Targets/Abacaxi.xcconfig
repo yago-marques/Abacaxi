@@ -1,0 +1,10 @@
+#include "../Base.xcconfig"
+#include "../App.xcconfig"
+#include "../Environments/Production.xcconfig"
+
+PRODUCT_BUNDLE_IDENTIFIER = $(BUNDLE_ID_ROOT)$(BUNDLE_ID_SUFFIX)
+ABACAXI_DISPLAY_NAME = $(DISPLAY_NAME)
+// "//" would be parsed as an xcconfig comment, so the scheme separator is
+// split with empty macro expansions ($()) to keep it out of the raw text.
+API_BASE_URL = https:$()/$()/$(API_SUBDOMAIN_PREFIX)$(API_HOST)
+INFOPLIST_FILE = Abacaxi/Resources/Info.plist

@@ -1,0 +1,6 @@
+// Shared across all Abacaxi targets (environment agnostic).
+
+SWIFT_VERSION = 5.0
+IPHONEOS_DEPLOYMENT_TARGET = 16.0
+TARGETED_DEVICE_FAMILY = 1
+ENABLE_BITCODE = NO

@@ -1,0 +1,5 @@
+// Abacaxi app identity (bundle id root, display name, API host).
+
+BUNDLE_ID_ROOT = com.by2.abacaxi.ios
+DISPLAY_NAME = Abacaxi
+API_HOST = api.abacaxi.by2.com.br

@@ -1,0 +1,49 @@
+name: Abacaxi
+
+options:
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+
+packages:
+  NetworkInterfaces:
+    path: Modules/NetworkInterfaces
+  Network:
+    path: Modules/Network
+  GeneralInterfaces:
+    path: Modules/GeneralInterfaces
+  Home:
+    path: Modules/Home
+  PersistenceInterfaces:
+    path: Modules/PersistenceInterfaces
+  Persistence:
+    path: Modules/Persistence
+
+targetTemplates:
+  AbacaxiAppTarget:
+    type: application
+    platform: iOS
+    sources:
+      - path: Abacaxi/Sources
+      - path: Abacaxi/Resources
+        buildPhase: none
+    dependencies:
+      - package: NetworkInterfaces
+      - package: Network
+      - package: GeneralInterfaces
+      - package: Home
+      - package: PersistenceInterfaces
+      - package: Persistence
+
+targets:
+  Abacaxi:
+    templates: [AbacaxiAppTarget]
+    configFiles:
+      Debug: Configs/Targets/Abacaxi.xcconfig
+      Release: Configs/Targets/Abacaxi.xcconfig
+
+  Abacaxi Stage:
+    templates: [AbacaxiAppTarget]
+    configFiles:
+      Debug: Configs/Targets/Abacaxi-Stage.xcconfig
+      Release: Configs/Targets/Abacaxi-Stage.xcconfig

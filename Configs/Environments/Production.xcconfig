@@ -1,0 +1,5 @@
+// Production environment values — applies to any brand.
+
+BUNDLE_ID_SUFFIX =
+API_SUBDOMAIN_PREFIX =
+ENABLE_DEBUG_MENU = NO
