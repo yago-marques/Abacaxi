@@ -1,11 +1,11 @@
 import Foundation
 import NetworkInterfaces
 
-struct URLSessionTaskCancellable: Cancellable {
+struct URLSessionTaskCancellable: CancellableProtocol {
     let task: URLSessionTask
     func cancel() { task.cancel() }
 }
 
-struct NoopCancellable: Cancellable {
+struct NoopCancellable: CancellableProtocol {
     func cancel() {}
 }

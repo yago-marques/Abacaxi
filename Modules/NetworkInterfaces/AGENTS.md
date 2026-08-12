@@ -1,6 +1,6 @@
 # NetworkInterfaces
 
-Protocolos de rede (`HTTPClient`, `HTTPEndpoint`, `HTTPHeaders`, `NetworkError`, `Cancellable`). Zero dependências locais — não importa nenhum outro module deste repo.
+Protocolos de rede (`HTTPClientProtocol`, `HTTPEndpointProtocol`, `HTTPHeaders`, `NetworkError`, `CancellableProtocol`). Zero dependências locais — não importa nenhum outro module deste repo.
 
 Regra: nada aqui pode importar `Network` (ou qualquer outro module concreto). É a camada que os outros dependem, nunca o contrário.
 

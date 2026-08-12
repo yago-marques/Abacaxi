@@ -4,7 +4,7 @@ import XCTest
 final class CoreDataStoreTests: XCTestCase {
     func test_saveThenFetch_returnsTheSameEntity() throws {
         let sut = TestItemModel.makeStore()
-        let item = TestItem(id: "1", name: "first")
+        let item = TestItemMock(id: "1", name: "first")
 
         try sut.save(item)
 
@@ -19,9 +19,9 @@ final class CoreDataStoreTests: XCTestCase {
 
     func test_save_withExistingID_updatesInPlaceInsteadOfDuplicating() throws {
         let sut = TestItemModel.makeStore()
-        try sut.save(TestItem(id: "1", name: "first"))
+        try sut.save(TestItemMock(id: "1", name: "first"))
 
-        try sut.save(TestItem(id: "1", name: "updated"))
+        try sut.save(TestItemMock(id: "1", name: "updated"))
 
         XCTAssertEqual(try sut.fetch(id: "1")?.name, "updated")
         XCTAssertEqual(try sut.fetchAll().count, 1)
@@ -29,8 +29,8 @@ final class CoreDataStoreTests: XCTestCase {
 
     func test_fetchAll_returnsEverySavedEntity() throws {
         let sut = TestItemModel.makeStore()
-        try sut.save(TestItem(id: "1", name: "first"))
-        try sut.save(TestItem(id: "2", name: "second"))
+        try sut.save(TestItemMock(id: "1", name: "first"))
+        try sut.save(TestItemMock(id: "2", name: "second"))
 
         let all = try sut.fetchAll()
 
@@ -39,7 +39,7 @@ final class CoreDataStoreTests: XCTestCase {
 
     func test_delete_removesTheEntity() throws {
         let sut = TestItemModel.makeStore()
-        try sut.save(TestItem(id: "1", name: "first"))
+        try sut.save(TestItemMock(id: "1", name: "first"))
 
         try sut.delete(id: "1")
 

@@ -1,6 +1,6 @@
 @testable import PersistenceInterfaces
 
-final class KeyValueStoringStub: KeyValueStoring {
+final class KeyValueStoringStub: KeyValueStoringProtocol {
     private var storage: [String: Any] = [:]
 
     func set<T>(_ value: T?, forKey key: String) {

@@ -51,6 +51,8 @@
 	</array>
 	<key>APIBaseURL</key>
 	<string>$(API_BASE_URL)</string>
+	<key>APIKey</key>
+	<string>$(API_KEY)</string>
 	<key>AbacaxiDebugMenuEnabled</key>
 	<string>$(ENABLE_DEBUG_MENU)</string>
 </dict>

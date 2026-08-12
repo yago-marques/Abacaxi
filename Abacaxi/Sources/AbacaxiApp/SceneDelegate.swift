@@ -1,3 +1,4 @@
+import GeneralInterfaces
 import UIKit
 
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
@@ -11,7 +12,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     ) {
         guard let windowScene = scene as? UIWindowScene else { return }
 
-        let appCoordinator = AppCoordinator()
+        let appCoordinator = CompositionRoot.makeAppCoordinator()
         appCoordinator.start()
         self.appCoordinator = appCoordinator
 

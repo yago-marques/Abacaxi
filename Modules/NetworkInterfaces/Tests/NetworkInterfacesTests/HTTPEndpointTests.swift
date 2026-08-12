@@ -2,7 +2,7 @@ import XCTest
 @testable import NetworkInterfaces
 
 final class HTTPEndpointTests: XCTestCase {
-    private struct MinimalEndpoint: HTTPEndpoint {
+    private struct MinimalEndpoint: HTTPEndpointProtocol {
         let path: String
     }
 
@@ -27,7 +27,7 @@ final class HTTPEndpointTests: XCTestCase {
     }
 
     func test_conformingType_canOverrideEveryDefault() throws {
-        struct CreateAccountEndpoint: HTTPEndpoint {
+        struct CreateAccountEndpoint: HTTPEndpointProtocol {
             let path = "/accounts"
             let method: HTTPMethod = .post
             let headers: HTTPHeaders = ["X-Custom": "value"]

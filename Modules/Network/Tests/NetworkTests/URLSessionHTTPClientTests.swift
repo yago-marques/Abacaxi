@@ -8,7 +8,7 @@ final class URLSessionHTTPClientTests: XCTestCase {
         let name: String
     }
 
-    private struct TestEndpoint: HTTPEndpoint {
+    private struct TestEndpoint: HTTPEndpointProtocol {
         let path: String
         var method: HTTPMethod = .get
         var headers: HTTPHeaders = [:]

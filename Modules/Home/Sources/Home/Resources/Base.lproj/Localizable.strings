@@ -1,0 +1,23 @@
+/* Headline shown on the first-access onboarding screen. */
+"onboarding.headline" = "O que tem\nna sua\ngeladeira?";
+
+/* Primary call to action shown on the first-access onboarding screen. */
+"onboarding.start" = "Vamos criar";
+
+/* Title displayed after the onboarding has been completed. */
+"home.title" = "Abacaxi";
+
+/* Daily attempts displayed in the Home top bar. */
+"home.dailyAttempts" = "%d tentativas hoje";
+
+/* State displayed while Home fetches the current daily attempts. */
+"home.dailyAttempts.loading" = "Carregando tentativas";
+
+/* State displayed when Home cannot load the current daily attempts. */
+"home.dailyAttempts.unavailable" = "Tentativas indisponíveis";
+
+/* Title displayed on the recipe creation card. */
+"home.recipeCreationCard.title" = "Gerar nova receita";
+
+/* Supporting text displayed on the recipe creation card. */
+"home.recipeCreationCard.subtitle" = "Crie uma receita personalizada com os ingredientes que você tem em casa.";

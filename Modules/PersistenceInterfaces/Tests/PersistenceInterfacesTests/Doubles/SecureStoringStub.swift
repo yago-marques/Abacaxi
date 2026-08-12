@@ -1,7 +1,7 @@
 import Foundation
 @testable import PersistenceInterfaces
 
-final class SecureStoringStub: SecureStoring {
+final class SecureStoringStub: SecureStoringProtocol {
     private var storage: [String: Data] = [:]
 
     func save(_ data: Data, forKey key: String) throws {

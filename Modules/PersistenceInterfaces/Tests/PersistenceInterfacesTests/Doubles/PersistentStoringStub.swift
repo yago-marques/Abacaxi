@@ -1,10 +1,10 @@
 @testable import PersistenceInterfaces
 
-struct StubEntity: PersistentEntity {
+struct StubEntity: PersistentEntityProtocol {
     let id: String
 }
 
-final class PersistentStoringStub: PersistentStoring {
+final class PersistentStoringStub: PersistentStoringProtocol {
     private var storage: [String: StubEntity] = [:]
 
     func save(_ entity: StubEntity) throws {

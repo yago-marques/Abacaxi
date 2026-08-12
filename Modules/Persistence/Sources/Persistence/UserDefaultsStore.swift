@@ -1,7 +1,7 @@
 import Foundation
 import PersistenceInterfaces
 
-public final class UserDefaultsStore: KeyValueStoring {
+public final class UserDefaultsStore: KeyValueStoringProtocol {
     private let defaults: UserDefaults
 
     public init(defaults: UserDefaults = .standard) {

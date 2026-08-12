@@ -5,11 +5,15 @@ xcuserdata/
 *.xcuserstate
 DerivedData/
 openspec/
+Configs/Secrets.xcconfig
 
 # Swift Package Manager
 .build/
 .swiftpm/
 Package.resolved
+
+# SwiftGen generated sources
+Modules/**/Sources/**/Resources/Generated/*.swift
 
 # macOS
 .DS_Store

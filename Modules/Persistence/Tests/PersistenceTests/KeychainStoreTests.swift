@@ -41,7 +41,7 @@ final class KeychainStoreTests: XCTestCase {
 
 private extension KeychainStoreTests {
     func makeSUT() throws -> KeychainStore {
-        try KeychainStore(service: "KeychainStoreTests")
+        try KeychainStore()
     }
 
     func uniqueKey() -> String {

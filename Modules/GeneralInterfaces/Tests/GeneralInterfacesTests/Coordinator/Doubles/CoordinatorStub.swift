@@ -7,16 +7,17 @@
 @testable import GeneralInterfaces
 import UIKit
 
-final class CoordinatorStub: Coordinator {
+final class CoordinatorStub: CoordinatorProtocol {
     private(set) var startCalled = false
-    private(set) var handledAction: CoordinatorAction?
+    private(set) var handledAction: CoordinatorActionProtocol?
     var navigationController: UINavigationController = .init()
+    weak var parentCoordinator: CoordinatorProtocol?
 
     func start() {
         startCalled = true
     }
 
-    func handle(_ action: CoordinatorAction) {
+    func handle(_ action: CoordinatorActionProtocol) {
         handledAction = action
     }
 }

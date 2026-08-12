@@ -2,14 +2,18 @@ PROJECT_NAME := Abacaxi
 XCODEPROJ := $(PROJECT_NAME).xcodeproj
 REQUIRED_XCODEGEN_VERSION := 2.45.3
 
-.PHONY: start bootstrap generate open clean lint lint-strict
+.PHONY: start bootstrap generate-localizations generate open clean lint lint-strict
 
-start: bootstrap generate open
+start: bootstrap generate-localizations generate open
 
 bootstrap:
 	@if ! command -v xcodegen >/dev/null 2>&1; then \
 		echo "XcodeGen not found — installing via Homebrew..."; \
 		brew install xcodegen; \
+	fi
+	@if ! command -v swiftgen >/dev/null 2>&1; then \
+		echo "SwiftGen not found — installing via Homebrew..."; \
+		brew install swiftgen; \
 	fi
 	@installed_version=$$(xcodegen --version | awk '{print $$2}'); \
 	if [ "$$installed_version" != "$(REQUIRED_XCODEGEN_VERSION)" ]; then \
@@ -20,6 +24,12 @@ bootstrap:
 
 generate:
 	xcodegen generate
+
+generate-localizations:
+	@find Modules -path '*/Sources/*/swiftgen.yml' -print | while read config; do \
+		echo "Generating localized sources from $$config..."; \
+		swiftgen config run --config "$$config"; \
+	done
 
 open:
 	open $(XCODEPROJ)

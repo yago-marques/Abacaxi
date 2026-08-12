@@ -2,7 +2,7 @@ import XCTest
 @testable import GeneralInterfaces
 
 final class CoordinatorTests: XCTestCase {
-    private struct StubAction: CoordinatorAction {}
+    private struct StubAction: CoordinatorActionProtocol {}
 
     func test_start_marksCoordinatorAsStarted() {
         let sut = makeSUT()

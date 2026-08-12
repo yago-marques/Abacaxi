@@ -1,12 +1,14 @@
 import CoreData
 import PersistenceInterfaces
 
-public struct CoreDataStoreError: Error {
-    public let message: String
+public enum CoreDataStoreError: Error {
+    case entityNotFound(String)
 }
 
-public final class CoreDataStore<Entity: PersistentEntity, ManagedObject: NSManagedObject>: PersistentStoring
-where Entity.ID: CVarArg {
+public final class CoreDataStore<
+    Entity: PersistentEntityProtocol,
+    ManagedObject: NSManagedObject
+>: PersistentStoringProtocol where Entity.ID: CVarArg {
     private let container: NSPersistentContainer
     private let entityName: String
     private let idKeyPath: String
@@ -52,7 +54,7 @@ where Entity.ID: CVarArg {
 
     private func insertManagedObject(in context: NSManagedObjectContext) throws -> ManagedObject {
         guard let description = NSEntityDescription.entity(forEntityName: entityName, in: context) else {
-            throw CoreDataStoreError(message: "No entity named '\(entityName)' found in the managed object model.")
+            throw CoreDataStoreError.entityNotFound(entityName)
         }
         return ManagedObject(entity: description, insertInto: context)
     }

@@ -1,10 +1,10 @@
 import Foundation
 import NetworkInterfaces
 
-/// `URLSession`-backed `HTTPClient`. Both call styles share the same request-building
+/// `URLSession`-backed `HTTPClientProtocol`. Both call styles share the same request-building
 /// (`makeURLRequest`) and response-mapping (`mapResult`/`decode`) logic; they differ only
 /// in which `URLSession` API they call to actually perform the transfer.
-public final class URLSessionHTTPClient: HTTPClient {
+public final class URLSessionHTTPClient: HTTPClientProtocol {
     private let session: URLSession
     private let configuration: NetworkConfiguration
     private let defaultHeadersProvider: DefaultHeadersProvider
@@ -23,7 +23,7 @@ public final class URLSessionHTTPClient: HTTPClient {
         self.logger = ConsoleRequestLogger(isEnabled: configuration.isLoggingEnabled)
     }
 
-    public func send<E: HTTPEndpoint, T: Decodable>(_ endpoint: E) async throws -> T {
+    public func send<E: HTTPEndpointProtocol, T: Decodable>(_ endpoint: E) async throws -> T {
         let urlRequest = try makeURLRequest(from: endpoint)
         logger.logRequest(urlRequest)
 
@@ -44,10 +44,10 @@ public final class URLSessionHTTPClient: HTTPClient {
     }
 
     @discardableResult
-    public func send<E: HTTPEndpoint, T: Decodable>(
+    public func send<E: HTTPEndpointProtocol, T: Decodable>(
         _ endpoint: E,
         completion: @escaping (Result<T, NetworkError>) -> Void
-    ) -> Cancellable {
+    ) -> CancellableProtocol {
         let urlRequest: URLRequest
         do {
             urlRequest = try makeURLRequest(from: endpoint)
@@ -70,7 +70,7 @@ public final class URLSessionHTTPClient: HTTPClient {
         return URLSessionTaskCancellable(task: task)
     }
 
-    private func makeURLRequest(from endpoint: some HTTPEndpoint) throws -> URLRequest {
+    private func makeURLRequest(from endpoint: some HTTPEndpointProtocol) throws -> URLRequest {
         let trimmedPath = endpoint.path.hasPrefix("/") ? String(endpoint.path.dropFirst()) : endpoint.path
         let base = endpoint.baseURL ?? configuration.baseURL
         guard var components = URLComponents(

@@ -1,24 +1,49 @@
+import Extensions
 import GeneralInterfaces
 import UIKit
 
-public final class HomeCoordinator: Coordinator {
+public final class HomeCoordinator: CoordinatorProtocol {
     public let navigationController: UINavigationController
-    public weak var parentCoordinator: Coordinator?
+    public weak var parentCoordinator: CoordinatorProtocol?
 
-    public init(navigationController: UINavigationController) {
+    private let useCaseContainer: UseCaseContainer
+
+    public init(
+        navigationController: UINavigationController,
+        useCaseContainer: UseCaseContainer
+    ) {
         self.navigationController = navigationController
+        self.useCaseContainer = useCaseContainer
     }
 
     public func start() {
-        navigationController.setViewControllers([HomeViewController()], animated: false)
+        showOnboarding()
     }
 
-    public func handle(_ action: CoordinatorAction) {
+    public func handle(_ action: CoordinatorActionProtocol) {
         guard let action = action as? HomeAction else { return }
 
         switch action {
-        case .didAppear:
-            break
+        case .openHome:
+            showHome()
+        case .openOnboarding:
+            guard !(navigationController.viewControllers.first is OnboardingViewController) else { return }
+            showOnboarding()
         }
+    }
+
+    private func showHome() {
+        let homeViewController = HomeFactory.makeViewController(useCaseContainer: useCaseContainer)
+        navigationController.view.transition(.crossDissolve) { [navigationController, homeViewController] in
+            navigationController.setViewControllers([homeViewController], animated: false)
+        }
+    }
+
+    private func showOnboarding() {
+        let onboardingViewController = OnboardingFactory.makeViewController(
+            useCaseContainer: useCaseContainer,
+            coordinator: self
+        )
+        navigationController.setViewControllers([onboardingViewController], animated: false)
     }
 }

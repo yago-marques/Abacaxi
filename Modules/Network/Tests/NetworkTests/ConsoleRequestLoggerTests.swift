@@ -15,6 +15,7 @@ final class ConsoleRequestLoggerTests: XCTestCase {
         let output = lines.joined()
         XCTAssertTrue(output.contains("\"name\" : \"Ana\""), "expected indented/pretty JSON, got: \(output)")
         XCTAssertTrue(output.contains("POST"))
+        XCTAssertTrue(output.contains("┌── REQUEST"))
     }
 
     func test_logResponse_fallsBackToRawStringForNonJSONBody() throws {
@@ -31,7 +32,9 @@ final class ConsoleRequestLoggerTests: XCTestCase {
 
         logger.logResponse(response, data: plainTextBody, error: nil)
 
-        XCTAssertTrue(lines.joined().contains("not json"))
+        let output = lines.joined()
+        XCTAssertTrue(output.contains("not json"))
+        XCTAssertTrue(output.contains("┌── RESPONSE"))
     }
 
     func test_logResponse_doesNotCrashOnEmptyBody() {
@@ -53,5 +56,21 @@ final class ConsoleRequestLoggerTests: XCTestCase {
         logger.logResponse(nil, data: nil, error: nil)
 
         XCTAssertTrue(lines.isEmpty)
+    }
+
+    func test_logRequest_redactsSensitiveHeaders() throws {
+        var lines: [String] = []
+        let logger = ConsoleRequestLogger(isEnabled: true, write: { lines.append($0) })
+        let url = try XCTUnwrap(URL(string: "https://api.example.com/attempts"))
+        var request = URLRequest(url: url)
+        request.setValue("secret", forHTTPHeaderField: "X-API-Key")
+        request.setValue("device-id", forHTTPHeaderField: "X-Device-ID")
+
+        logger.logRequest(request)
+
+        let output = lines.joined()
+        XCTAssertTrue(output.contains("X-API-Key: <redacted>"))
+        XCTAssertTrue(output.contains("X-Device-ID: device-id"))
+        XCTAssertFalse(output.contains("secret"))
     }
 }

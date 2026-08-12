@@ -2,18 +2,17 @@ import Foundation
 import PersistenceInterfaces
 import Security
 
-public struct KeychainError: Error {
-    public let status: OSStatus
+public enum KeychainError: Error {
+    case missingBundleIdentifier
+    case unhandledStatus(OSStatus)
 }
 
-public struct KeychainBundleError: Error { }
-
-public final class KeychainStore: SecureStoring {
+public final class KeychainStore: SecureStoringProtocol {
     private let service: String
 
-    public init(service: String) throws {
+    public init() throws {
         guard let bundle = Bundle.main.bundleIdentifier else {
-            throw KeychainBundleError()
+            throw KeychainError.missingBundleIdentifier
         }
         self.service = bundle
     }
@@ -30,7 +29,7 @@ public final class KeychainStore: SecureStoring {
 
         let status = SecItemAdd(query as CFDictionary, nil)
         guard status == errSecSuccess else {
-            throw KeychainError(status: status)
+            throw KeychainError.unhandledStatus(status)
         }
     }
 
@@ -50,7 +49,7 @@ public final class KeychainStore: SecureStoring {
             return nil
         }
         guard status == errSecSuccess else {
-            throw KeychainError(status: status)
+            throw KeychainError.unhandledStatus(status)
         }
         return result as? Data
     }
@@ -64,7 +63,7 @@ public final class KeychainStore: SecureStoring {
 
         let status = SecItemDelete(query as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else {
-            throw KeychainError(status: status)
+            throw KeychainError.unhandledStatus(status)
         }
     }
 }

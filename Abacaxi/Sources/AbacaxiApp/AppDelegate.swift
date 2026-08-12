@@ -1,3 +1,4 @@
+import DesignSystem
 import UIKit
 
 @main
@@ -6,7 +7,8 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
-        true
+        DSTheme.apply()
+        return true
     }
 
     func application(

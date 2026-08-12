@@ -10,7 +10,13 @@ App mobile de banking. Auth, contas, cartões, extrato, API própria com JWT.
 make start
 ```
 
-Isso instala o XcodeGen (se necessário), gera o projeto Xcode a partir de `project.yml` e abre no Xcode.
+Isso instala o XcodeGen e o SwiftGen (se necessário), gera os fontes localizados tipados, gera o projeto Xcode a partir de `project.yml` e abre no Xcode.
+
+Para regenerar apenas as strings tipadas de todos os módulos, use:
+
+```bash
+make generate-localizations
+```
 
 ## Targets
 

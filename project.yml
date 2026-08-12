@@ -12,12 +12,26 @@ packages:
     path: Modules/Network
   GeneralInterfaces:
     path: Modules/GeneralInterfaces
+  DomainInterfaces:
+    path: Modules/DomainInterfaces
+  Domain:
+    path: Modules/Domain
+  DataInterfaces:
+    path: Modules/DataInterfaces
+  Data:
+    path: Modules/Data
+  Launcher:
+    path: Modules/Launcher
   Home:
     path: Modules/Home
   PersistenceInterfaces:
     path: Modules/PersistenceInterfaces
   Persistence:
     path: Modules/Persistence
+  DesignSystem:
+    path: Modules/DesignSystem
+  Extensions:
+    path: Modules/Extensions
 
 targetTemplates:
   AbacaxiAppTarget:
@@ -25,15 +39,30 @@ targetTemplates:
     platform: iOS
     sources:
       - path: Abacaxi/Sources
-      - path: Abacaxi/Resources
+      - path: Abacaxi/Resources/Info.plist
         buildPhase: none
+      - path: Abacaxi/Resources/Assets.xcassets
+        buildPhase: resources
     dependencies:
       - package: NetworkInterfaces
       - package: Network
       - package: GeneralInterfaces
+      - package: DomainInterfaces
+      - package: Domain
+      - package: DataInterfaces
+      - package: Data
+      - package: Launcher
       - package: Home
       - package: PersistenceInterfaces
       - package: Persistence
+      - package: DesignSystem
+      - package: Extensions
+
+  ModuleUnitTests:
+    type: bundle.unit-test
+    platform: iOS
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
 
 targets:
   Abacaxi:
@@ -47,3 +76,110 @@ targets:
     configFiles:
       Debug: Configs/Targets/Abacaxi-Stage.xcconfig
       Release: Configs/Targets/Abacaxi-Stage.xcconfig
+
+  DataTests:
+    templates: [ModuleUnitTests]
+    sources: [Modules/Data/Tests]
+    dependencies:
+      - package: Data
+      - package: DataInterfaces
+      - package: NetworkInterfaces
+      - package: PersistenceInterfaces
+
+  DataInterfacesTests:
+    templates: [ModuleUnitTests]
+    sources: [Modules/DataInterfaces/Tests]
+    dependencies: [{package: DataInterfaces}]
+
+  DesignSystemTests:
+    templates: [ModuleUnitTests]
+    sources: [Modules/DesignSystem/Tests]
+    dependencies: [{package: DesignSystem}]
+
+  DomainTests:
+    templates: [ModuleUnitTests]
+    sources: [Modules/Domain/Tests]
+    dependencies:
+      - package: Domain
+      - package: DataInterfaces
+      - package: DomainInterfaces
+
+  DomainInterfacesTests:
+    templates: [ModuleUnitTests]
+    sources: [Modules/DomainInterfaces/Tests]
+    dependencies: [{package: DomainInterfaces}]
+
+  GeneralInterfacesTests:
+    templates: [ModuleUnitTests]
+    sources: [Modules/GeneralInterfaces/Tests]
+    dependencies: [{package: GeneralInterfaces}]
+
+  HomeTests:
+    templates: [ModuleUnitTests]
+    sources: [Modules/Home/Tests]
+    dependencies:
+      - package: Home
+      - package: DomainInterfaces
+      - package: GeneralInterfaces
+
+  LauncherTests:
+    templates: [ModuleUnitTests]
+    sources: [Modules/Launcher/Tests]
+    dependencies:
+      - package: Launcher
+      - package: DomainInterfaces
+      - package: GeneralInterfaces
+
+  NetworkTests:
+    templates: [ModuleUnitTests]
+    sources: [Modules/Network/Tests]
+    dependencies:
+      - package: Network
+      - package: NetworkInterfaces
+
+  NetworkInterfacesTests:
+    templates: [ModuleUnitTests]
+    sources: [Modules/NetworkInterfaces/Tests]
+    dependencies: [{package: NetworkInterfaces}]
+
+  PersistenceTests:
+    templates: [ModuleUnitTests]
+    sources: [Modules/Persistence/Tests]
+    testHost: PersistenceTestHost
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.abacaxi.persistence-tests
+      CODE_SIGN_ENTITLEMENTS: Configs/Tests/PersistenceTests.entitlements
+    dependencies:
+      - target: PersistenceTestHost
+      - package: Persistence
+      - package: PersistenceInterfaces
+
+  PersistenceTestHost:
+    type: application
+    platform: iOS
+    sources:
+      - path: Configs/Tests/PersistenceTestHost/Sources
+      - path: Configs/Tests/PersistenceTestHost/Info.plist
+        buildPhase: none
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.abacaxi.persistence-test-host
+      CODE_SIGN_ENTITLEMENTS: Configs/Tests/PersistenceTestHost.entitlements
+
+  PersistenceInterfacesTests:
+    templates: [ModuleUnitTests]
+    sources: [Modules/PersistenceInterfaces/Tests]
+    dependencies: [{package: PersistenceInterfaces}]
+
+schemes:
+  DataTests: {build: {targets: {DataTests: [test]}}, test: {targets: [DataTests]}}
+  DataInterfacesTests: {build: {targets: {DataInterfacesTests: [test]}}, test: {targets: [DataInterfacesTests]}}
+  DesignSystemTests: {build: {targets: {DesignSystemTests: [test]}}, test: {targets: [DesignSystemTests]}}
+  DomainTests: {build: {targets: {DomainTests: [test]}}, test: {targets: [DomainTests]}}
+  DomainInterfacesTests: {build: {targets: {DomainInterfacesTests: [test]}}, test: {targets: [DomainInterfacesTests]}}
+  GeneralInterfacesTests: {build: {targets: {GeneralInterfacesTests: [test]}}, test: {targets: [GeneralInterfacesTests]}}
+  HomeTests: {build: {targets: {HomeTests: [test]}}, test: {targets: [HomeTests]}}
+  LauncherTests: {build: {targets: {LauncherTests: [test]}}, test: {targets: [LauncherTests]}}
+  NetworkTests: {build: {targets: {NetworkTests: [test]}}, test: {targets: [NetworkTests]}}
+  NetworkInterfacesTests: {build: {targets: {NetworkInterfacesTests: [test]}}, test: {targets: [NetworkInterfacesTests]}}
+  PersistenceTests: {build: {targets: {PersistenceTests: [test]}}, test: {targets: [PersistenceTests]}}
+  PersistenceInterfacesTests: {build: {targets: {PersistenceInterfacesTests: [test]}}, test: {targets: [PersistenceInterfacesTests]}}
