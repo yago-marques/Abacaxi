@@ -12,7 +12,10 @@ Este repositório é, intencionalmente, mais amplo do que um MVP estrito. Ele fo
 
 ## Demo
 
-<!-- TODO: adicionar vídeo de demo aqui (arraste o .mp4/.mov para este bloco no editor do GitHub, que gera o link automaticamente) -->
+
+
+https://github.com/user-attachments/assets/e5be3071-5d55-42b5-a9a7-878f1648558c
+
 
 ## O produto
 
