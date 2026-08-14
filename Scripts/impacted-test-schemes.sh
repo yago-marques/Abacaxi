@@ -26,7 +26,7 @@ fi
 # app-shell sources, build/tooling files, and manifests (they change the
 # graph this script relies on).
 while IFS= read -r file; do
-  if [[ "$file" != Modules/* || "$file" == */Package.swift ]]; then
+  if [[ "$file" != Modules/*/* || "$file" == */Package.swift ]]; then
     echo "AllTests"
     exit 0
   fi

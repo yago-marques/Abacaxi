@@ -60,7 +60,12 @@ test:
 		-destination '$(TEST_DESTINATION)'
 
 test-impacted:
-	@schemes="$$(bash Scripts/impacted-test-schemes.sh $(BASE_REF) HEAD)"; \
+	@set -e; \
+	schemes="$$(bash Scripts/impacted-test-schemes.sh $(BASE_REF) HEAD)"; \
+	if [ -z "$$schemes" ]; then \
+		echo "error: impacted-test-schemes.sh produced no schemes" >&2; \
+		exit 1; \
+	fi; \
 	echo "Impacted test schemes: $$schemes"; \
 	for scheme in $$schemes; do \
 		$(MAKE) test TEST_SCHEME=$$scheme; \
