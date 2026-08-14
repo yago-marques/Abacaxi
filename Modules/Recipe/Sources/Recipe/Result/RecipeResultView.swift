@@ -55,7 +55,7 @@ struct RecipeResultView: View {
                 .font(.dsButton)
                 .foregroundStyle(Color.dsAccent)
                 section(
-                    L10n.RecipeResult.ingredients,
+                    "Ingredientes",
                     values: recipe.ingredients.map { "\($0.quantity) \($0.name)" }
                 )
                 section(
@@ -184,4 +184,8 @@ struct RecipeResultView: View {
             toastRequest = DSToastRequest(message: L10n.RecipeResult.removeError, style: .error)
         }
     }
+}
+
+protocol RecipeSharing {
+    func share(recipe: RecipeBusinessModel)
 }
