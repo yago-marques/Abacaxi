@@ -81,7 +81,10 @@ final class QuestionStepperViewModel: ObservableObject, QuestionStepperViewModel
             isCompleted = true
             onComplete(answers.compactMap { questionID, answer in
                 switch answer {
-                case let .option(value), let .custom(value): .init(questionID: questionID, value: value)
+                case let .option(value):
+                    .init(questionID: questionID, value: value)
+                case let .custom(value):
+                    .init(questionID: questionID, value: value.trimmingCharacters(in: .whitespacesAndNewlines))
                 }
             })
             return
