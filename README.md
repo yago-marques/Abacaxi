@@ -83,7 +83,7 @@ Isso impede que detalhes de transporte ou persistência vazem para a apresentaç
 
 ### Concorrência
 
-A camada de apresentação é isolada na main actor: ViewModels, coordinators (`CoordinatorProtocol`) e factories de UI são `@MainActor`, e trabalho assíncrono vive em `Task`s guardadas e canceladas quando o usuário abandona a tela — abandonar uma geração de receita cancela a request imediatamente. Os módulos folha (`NetworkInterfaces`, `DomainInterfaces`, `DataInterfaces`) já compilam com `StrictConcurrency` e `ExistentialAny`, com os modelos `Sendable`: a modularização permite migrar para Swift 6 um package por vez, das folhas para as camadas superiores.
+A camada de apresentação é isolada na main actor: ViewModels, coordinators (`CoordinatorProtocol`) e factories de UI são `@MainActor`, e trabalho assíncrono vive em `Task`s guardadas e canceladas quando o usuário abandona a tela — abandonar uma geração de receita cancela a request imediatamente. Os módulos na base do grafo de dependências — os packages de interface (`NetworkInterfaces`, `DomainInterfaces`, `DataInterfaces`), que não dependem de nenhum outro módulo do projeto — já compilam com `StrictConcurrency` e `ExistentialAny`, com os modelos `Sendable`. A modularização permite migrar para Swift 6 um package por vez: primeiro quem não depende de ninguém, depois camada por camada em direção ao app.
 
 Erros são tipados por camada e mapeados exaustivamente na fronteira que os consome: `NetworkError` → erro de repository (incluindo `network` para falha de transporte e `cancelled`) → erro de use case → caso de feedback na apresentação, onde cada caso vira mensagem localizada específica — e cancelamento nunca é exibido como erro.
 
@@ -220,7 +220,7 @@ As capacidades abaixo são próximos passos — não fazem parte da implementaç
 - analytics de produto para entender os funis de criação e salvamento de receitas;
 - acessibilidade além do essencial já coberto pelos tokens (Dynamic Type, VoiceOver e alvos mínimos): auditoria completa com Accessibility Inspector, contraste e redução de movimento;
 - distribuição contínua: o CI de validação (lint + suíte completa) já roda a cada push; faltam assinatura, builds de release e distribuição — com Fastlane como candidato natural;
-- migração completa para Swift 6 (os módulos folha já compilam com strict concurrency).
+- migração completa para Swift 6 (os packages de interface, base do grafo de dependências, já compilam com strict concurrency).
 
 Em um cenário de milhões de usuários, centenas de desenvolvedores e monorepo, a evolução natural do sistema de build seria o **Bazel**: builds herméticos, cache remoto, execução paralela e maior previsibilidade no tempo de feedback.
 
