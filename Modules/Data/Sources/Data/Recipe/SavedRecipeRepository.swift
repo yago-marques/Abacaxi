@@ -88,7 +88,7 @@ private extension SavedRecipePersistentModel {
         preparationTimeMinutes = recipe.preparationTimeMinutes
         servings = recipe.servings
         nutritionData = try recipe.nutrition.map(JSONEncoder().encode)
-        imagePath = try recipe.imageData.map { try imageStore.save($0, named: recipe.id.uuidString) }
+        imagePath = recipe.imageData.flatMap { try? imageStore.save($0, named: recipe.id.uuidString) }
         createdAt = Date()
     }
 }
