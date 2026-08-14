@@ -23,6 +23,8 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window.rootViewController = appCoordinator.navigationController
         window.makeKeyAndVisible()
         self.window = window
+
+        AnalyticsClient.shared.trackAppLaunch()
     }
 }
 
