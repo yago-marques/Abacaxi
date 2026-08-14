@@ -212,7 +212,9 @@ A suíte cobre os fluxos críticos do produto de ponta a ponta das camadas: gera
 make test
 ```
 
-O scheme `AllTests` agrega os test targets de todos os módulos e coleta coverage; o CI executa lint estrito e a suíte completa a cada push — o badge no topo reflete o estado atual.
+O scheme `AllTests` agrega os test targets de todos os módulos e coleta coverage; o CI executa lint estrito e a suíte completa a cada push no `main` — o badge no topo reflete o estado atual.
+
+Em **pull requests**, o CI roda apenas os testes impactados: `Scripts/impacted-test-schemes.sh` deriva do grafo de packages os módulos alterados e todos os dependentes transitivos, e executa somente esses schemes (`make test-impacted` reproduz localmente). Qualquer mudança fora de `Modules/` — app-shell, manifests, tooling — recai conservadoramente na suíte completa. É o mesmo princípio de test impact analysis que o Bazel entregaria em escala, viabilizado aqui pelo grafo explícito dos módulos SPM.
 
 ## Evoluções para escala
 
