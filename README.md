@@ -19,12 +19,33 @@ Este repositório é, intencionalmente, mais amplo do que um MVP estrito. Ele fo
 
 O projeto usa módulos Swift locais e contratos explícitos entre camadas. A separação reduz acoplamento acidental e limita o impacto de mudanças, favorecendo um grafo de build mais previsível e uma base mais fácil de navegar por pessoas e ferramentas de IA.
 
+Cada módulo em `Modules/` é um **Swift Package Manager (SPM)** local, com produto, dependências e testes próprios. Além de organizar o código, isso transforma as fronteiras arquiteturais em fronteiras de compilação: cada package pode ser construído e testado isoladamente.
+
 ```text
-Presentation (Home UIKit / Recipe SwiftUI)
-                    ↓ DomainInterfaces
-Domain              ↓ DataInterfaces
-Data                ↓ PersistenceInterfaces / NetworkInterfaces
-Persistence / Network
+                                  Abacaxi App Shell
+                         CompositionRoot + FeatureModules
+                                         │
+                 ┌───────────────────────┼───────────────────────┐
+                 ▼                       ▼                       ▼
+        Launcher / Home              Recipe                 Shared builders
+             UIKit                  SwiftUI            stores + HTTP client
+                 │                       │                       │
+                 └─────────────── Presentation ────────────────┘
+                                         │
+                              GeneralInterfaces + DomainInterfaces
+                                         │
+                                      Domain
+                                         │
+                                  DataInterfaces
+                                         │
+                                      Data
+                             ┌───────────┴───────────┐
+                             ▼                       ▼
+                PersistenceInterfaces         NetworkInterfaces
+                             │                       │
+                       Persistence                Network
+                 Core Data / Keychain /       URLSession
+                    UserDefaults
 ```
 
 As implementações concretas não sobem para as camadas superiores. A apresentação recebe somente Use Cases definidos em `DomainInterfaces`; `Domain` depende dos contratos de `DataInterfaces`; e `Data` implementa repositories usando contratos de persistência e rede.
@@ -42,11 +63,29 @@ As implementações concretas não sobem para as camadas superiores. A apresenta
 | `Extensions` | Facilitadores de constraints, animações e transições. |
 | `GeneralInterfaces` | Contratos compartilhados, como coordinator e container de Use Cases. |
 
-### Composição e orientação a objetos
+### POP no nível de módulo
 
-Cada feature expõe uma porta de composição pequena. Os `FeatureModule`s iniciam seus próprios fluxos, factories estáticas montam objetos prontos para uso e builders no app-shell registram as dependências. Coordinators cuidam apenas de navegação; ViewModels concentram decisões de apresentação e regras do fluxo.
+O desenho privilegia **Protocol-Oriented Programming (POP)** no nível de módulo. Cada feature expõe uma porta de composição pequena e depende de contratos, não de implementações concretas. Os `FeatureModule`s iniciam seus próprios fluxos, factories estáticas montam objetos prontos para uso e builders no app-shell registram as dependências. Coordinators cuidam apenas de navegação; ViewModels concentram decisões de apresentação e regras do fluxo.
 
-Esse desenho aplica orientação a objetos no nível de módulo: contratos descrevem colaborações, implementações permanecem encapsuladas por padrão (`internal`) e o app-shell é o único lugar que conhece o grafo concreto de dependências.
+Os protocolos descrevem colaborações, implementações permanecem encapsuladas por padrão (`internal`) e o app-shell é o único lugar que conhece o grafo concreto de dependências. Isso permite substituir infraestrutura, criar duplos de teste e evoluir módulos sem propagar tipos concretos pelas camadas superiores.
+
+### SOLID aplicado às fronteiras
+
+Os princípios SOLID orientam a estrutura sem exigir camadas artificiais:
+
+- **Single Responsibility:** features, Use Cases, repositories e stores têm responsabilidades delimitadas;
+- **Open/Closed:** novos fluxos e implementações são acrescentados atrás de contratos, com baixo impacto nos consumidores existentes;
+- **Liskov Substitution:** implementações de infraestrutura e duplos de teste respeitam os mesmos protocolos;
+- **Interface Segregation:** contratos são específicos por contexto, evitando dependências genéricas e inchadas;
+- **Dependency Inversion:** Presentation, Domain e Data dependem de interfaces; o app-shell compõe implementações concretas.
+
+SPM torna essas decisões verificáveis no build: dependências indevidas não são apenas convenções, elas aparecem no grafo de packages.
+
+### UIKit e SwiftUI
+
+`Home` foi implementado em UIKit e `Recipe` em SwiftUI de forma deliberada. A escolha demonstra técnicas de composição, estado, navegação e Design System nos dois frameworks, sem forçar uma falsa uniformidade no código.
+
+Essa convivência é comum em apps nativos maduros: muitas empresas mantêm UIKit em fluxos estáveis enquanto introduzem SwiftUI em novas funcionalidades, ou estão em uma migração gradual. Ter fronteiras de módulo e contratos bem definidos torna essa transição menos arriscada, pois uma feature pode evoluir de framework sem alterar o domínio, a camada de dados ou os fluxos adjacentes.
 
 ### Modelos e mapeamento
 
@@ -72,6 +111,17 @@ O app privilegia APIs nativas para reduzir custo de manutenção e manter o comp
 - `SwiftGen` para gerar acesso tipado às strings de cada módulo.
 
 `XcodeGen` e `SwiftGen` são ferramentas de desenvolvimento instaladas localmente; não são dependências de runtime do aplicativo.
+
+## Ambientes
+
+O projeto gera dois targets a partir de `project.yml` e de arquivos `.xcconfig` por ambiente:
+
+| Target | Ambiente | Características |
+| --- | --- | --- |
+| `Abacaxi` | Production | Bundle principal, App Icon de produção e menu de debug desabilitado. |
+| `Abacaxi Stage` | Stage | Bundle com sufixo `.stage`, App Icon próprio, host de stage e menu de debug habilitado. |
+
+Configurações compartilhadas ficam em `Configs/Base.xcconfig` e `Configs/App.xcconfig`; cada target combina esses valores com seu ambiente. Credenciais locais ficam em `Configs/Secrets.xcconfig`, que não é versionado, e o repositório disponibiliza `Configs/Secrets.example.xcconfig` como referência.
 
 ## Desenvolvimento orientado por especificação e IA
 
@@ -150,7 +200,8 @@ Em um cenário de milhões de usuários, centenas de desenvolvedores e monorepo,
 ## O que avaliar neste projeto
 
 - A direção das dependências e o encapsulamento entre módulos;
-- A separação entre UIKit e SwiftUI sem perder consistência visual;
+- O uso de POP e contratos para proteger as fronteiras entre módulos;
+- A separação deliberada entre UIKit e SwiftUI sem perder consistência visual;
 - O uso de contratos, factories e builders para montar dependências;
 - A estratégia de modelos e mappers entre apresentação, domínio e dados;
 - A escolha de ferramentas nativas e a ausência de dependências externas de runtime;
