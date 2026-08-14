@@ -11,6 +11,11 @@ enum NetworkClientBuilder {
         guard let configuration = try? NetworkConfiguration.fromInfoPlist(bundle: .main) else {
             fatalError("Failed to initialize NetworkConfiguration from Info.plist")
         }
-        return URLSessionHTTPClient(configuration: configuration)
+
+        let sessionConfiguration = URLSessionConfiguration.default
+        sessionConfiguration.timeoutIntervalForRequest = 120
+        sessionConfiguration.timeoutIntervalForResource = 150
+        let session = URLSession(configuration: sessionConfiguration)
+        return URLSessionHTTPClient(configuration: configuration, session: session)
     }()
 }

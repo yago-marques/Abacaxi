@@ -38,9 +38,7 @@ run_tests() {
       return
     fi
   else
-    while IFS= read -r test_directory; do
-      schemes+=("$(basename "$(dirname "$test_directory")")Tests")
-    done < <(find "$repo_root/Modules" -mindepth 2 -maxdepth 2 -type d -name Tests | sort)
+    schemes=("AllTests")
   fi
 
   local destination_id

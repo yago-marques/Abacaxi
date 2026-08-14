@@ -106,6 +106,36 @@ public extension UIView {
         )
     }
 
+    func disappear(
+        _ animation: UIViewAnimation = .quick,
+        with transform: CGAffineTransform = .identity,
+        completion: ((Bool) -> Void)? = nil
+    ) {
+        animate(animation, animations: {
+            self.alpha = 0
+            self.transform = transform
+        }, completion: { finished in
+            self.isHidden = true
+            self.alpha = 1
+            self.transform = .identity
+            completion?(finished)
+        })
+    }
+
+    func appear(
+        _ animation: UIViewAnimation = .standard,
+        from transform: CGAffineTransform = .identity,
+        completion: ((Bool) -> Void)? = nil
+    ) {
+        isHidden = false
+        alpha = 0
+        self.transform = transform
+        animate(animation, animations: {
+            self.alpha = 1
+            self.transform = .identity
+        }, completion: completion)
+    }
+
     func pulse(
         scale: CGFloat = 1.12,
         opacity: Float = 0.75,

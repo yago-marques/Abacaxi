@@ -5,15 +5,20 @@ public final class LauncherCoordinator: CoordinatorProtocol {
     private static let minimumDisplayDuration: TimeInterval = 2
 
     public let navigationController: UINavigationController
-    public weak var parentCoordinator: CoordinatorProtocol?
 
     private let useCaseContainer: UseCaseContainer
+    private let onFinish: () -> Void
     private var launcherViewController: LauncherViewController?
     private var isExitScheduled = false
 
-    public init(navigationController: UINavigationController, useCaseContainer: UseCaseContainer) {
+    public init(
+        navigationController: UINavigationController,
+        useCaseContainer: UseCaseContainer,
+        onFinish: @escaping () -> Void
+    ) {
         self.navigationController = navigationController
         self.useCaseContainer = useCaseContainer
+        self.onFinish = onFinish
     }
 
     public func start() {
@@ -21,8 +26,8 @@ public final class LauncherCoordinator: CoordinatorProtocol {
             useCaseContainer: useCaseContainer,
             coordinator: self
         )
-        launcherViewController.didFinishExpansion = { [weak self] in
-            self?.parentCoordinator?.handle(CloseFlowAction())
+        launcherViewController.didFinishExpansion = { [onFinish] in
+            onFinish()
         }
         self.launcherViewController = launcherViewController
         navigationController.setViewControllers([launcherViewController], animated: false)

@@ -9,11 +9,15 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../DataInterfaces"),
+        .package(path: "../DomainInterfaces"),
         .package(path: "../PersistenceInterfaces"),
         .package(path: "../NetworkInterfaces")
     ],
     targets: [
-        .target(name: "Data", dependencies: ["DataInterfaces", "PersistenceInterfaces", "NetworkInterfaces"]),
-        .testTarget(name: "DataTests", dependencies: ["Data", "NetworkInterfaces"])
+        .target(name: "Data", dependencies: ["DataInterfaces", "DomainInterfaces", "PersistenceInterfaces", "NetworkInterfaces"]),
+        .testTarget(
+            name: "DataTests",
+            dependencies: ["Data", "DomainInterfaces", "NetworkInterfaces", "PersistenceInterfaces"]
+        )
     ]
 )

@@ -87,11 +87,13 @@ Teste os caminhos relevantes de sucesso, falha e ausência/limite quando o tipo 
 
 Depois de alterar qualquer arquivo Swift, execute `Scripts/on-write-code-check.sh <arquivo>`. O script falha quando o lint ou o test target iOS do módulo falha. Para validar todas as suítes antes de entregar, rode `Scripts/on-write-code-check.sh` sem argumentos.
 
-Cada módulo com testes tem um bundle dedicado no `project.yml` (`HomeTests`, `NetworkTests`, etc.) que usa as mesmas fontes em `Modules/<Module>/Tests`; não duplique testes em outro diretório. Esses bundles são executados por `xcodebuild test` no simulador. Módulos sem diretório `Tests` são apenas compilados pelo hook e devem ganhar um test target junto do primeiro teste.
+Cada módulo com testes tem um bundle dedicado no `project.yml` (`HomeTests`, `NetworkTests`, etc.) que usa as mesmas fontes em `Modules/<Module>/Tests`; não duplique testes em outro diretório. Esses bundles são executados por `xcodebuild test` no simulador. O scheme agregador `AllTests` executa todos eles de uma vez e é usado por `Scripts/on-write-code-check.sh` sem argumentos. Módulos sem diretório `Tests` são apenas compilados pelo hook e devem ganhar um test target junto do primeiro teste.
 
 ## Erros
 
 Todo erro lançado (`throws`) é um `enum` conformando `Error`, nunca `struct`. Cada caso de falha vira um `case`, com dado associado quando fizer sentido (ex: código de status, nome da entidade).
+
+Falhas que chegam à apresentação e exigem retorno ao usuário devem, por padrão, usar o toast de erro do Design System com mensagem localizada. O ViewModel emite um estado/caso de falha — nunca a descrição bruta de um `Error` — e a View mapeia esse caso para o `Localizable` antes de apresentar o toast. Exceções só são aceitas quando o erro é deliberadamente não-bloqueante; o `catch` deve documentar esse motivo, jamais ficar vazio.
 
 ```swift
 public enum KeychainError: Error {
@@ -141,6 +143,16 @@ public final class KeychainStore: SecureStoringProtocol { ... }
 
 Motivo: deixa inequívoco na leitura da assinatura/import se algo é contrato (`Protocol`) ou implementação concreta — sem isso, nome do protocolo e nome do implementador ficam parecidos demais (`Coordinator` vs. `HomeCoordinator`) e confundem qual é qual.
 
+## Controle de acesso entre módulos
+
+Todo tipo e membro é `internal` por padrão. Use `public` somente quando ele for, de forma intencional, uma entrada ou contrato que outro módulo precisa consumir. Uma feature deve expor a menor superfície possível — por exemplo, uma única factory pública que retorna um protocolo — e manter ViewControllers, ViewModels, actions, estados e factories auxiliares internos ao módulo.
+
+Os testes do próprio módulo usam `@testable import <Module>` e, por isso, podem acessar símbolos `internal`. Nunca transforme tipos em `public` apenas para testá-los.
+
+## Swift Testing
+
+Em novos fluxos SwiftUI, prefira Swift Testing para regras de ViewModel e estados de apresentação: `import Testing`, `@Test` e `#expect`. O teste permanece no bundle do módulo, usa `@testable import` para acessar tipos internos e valida comportamento observável, não a estrutura privada de uma View.
+
 ## Strings de interface
 
 Todo texto exibido por uma tela deve ficar no `Localizable.strings` do próprio módulo — nunca como literal em arquivo Swift. Use o `L10n` gerado pelo SwiftGen para acessar as chaves tipadas.
@@ -153,9 +165,48 @@ O arquivo gerado em `Resources/Generated/L10n.swift` não é versionado. Depois 
 
 ## MVVM, coordinators e factories
 
+### Organização da composição do app
+
+Em `AbacaxiApp/Modules`, organize cada domínio de composição assim:
+
+```text
+Modules/
+  Home/
+    Builders/
+      <UseCase>Builder.swift
+    HomeModule.swift
+  Launcher/
+    Builders/
+      <UseCase>Builder.swift
+    LauncherModule.swift
+  Recipe/
+    RecipeModule.swift
+  Shared/
+    <Infra>Builder.swift
+```
+
+`<Feature>Module.swift` é a única porta do domínio na composição do app: registra dependências e/ou inicia o fluxo. Builders específicos ficam em `Builders/`; builders compartilhados de infraestrutura ficam em `Shared/`. Não misture builders de feature diretamente ao lado de seu `Module` nem coloque builders de um domínio dentro de outro.
+
 ### Coordinator
 
 Coordinator cuida exclusivamente de navegação: recebe actions e apresenta, empilha ou substitui telas. Não contém regras de negócio, consulta storage, decide estado de primeiro acesso ou guarda ViewModels.
+
+Um módulo de tela nunca importa nem inicia diretamente outro módulo de tela. A camada de composição do app (`AbacaxiApp/Modules/<Feature>/<Feature>Module`) expõe `start(...)`, monta o coordinator do próprio package e injeta callbacks de transição. `CoordinatorProtocol` não tem `parentCoordinator`; use callbacks explícitos para qualquer saída ou transição entre módulos.
+
+Para uma única saída externa, injete uma closure. Quando um coordinator tiver duas ou mais saídas externas coesas, declare um protocolo público e específico do módulo, como `HomeExternalRouterProtocol`, no próprio package. O coordinator depende desse protocolo e chama métodos diretos (`externalRouter.openRecipeCreation()`); a implementação concreta fica em `AbacaxiApp/Modules/<Feature>/`, onde pode iniciar módulos vizinhos. Não crie routers globais ou genéricos.
+
+```swift
+enum RecipeModule {
+    static func start(navigationController: UINavigationController) -> CoordinatorProtocol { ... }
+}
+
+// Na composição de Home:
+onOpenRecipeCreation: {
+    RecipeModule.start(navigationController: navigationController)
+}
+```
+
+Para fluxos que apenas encerram, injete `onFinish` pela factory/coordinator. Não use uma action genérica como `CloseFlowAction`: o destino de um término é uma decisão da composição, não um evento global.
 
 As actions de coordinator são comandos de navegação no infinitivo: `openHome`, `openOnboarding`, `closeLauncher`, `backToProfile`. Evite estados e eventos no passado, como `didFinish`, `isLoggedIn` ou `onboardingCompleted`.
 
@@ -207,6 +258,12 @@ public enum OnboardingFactory {
 
 ## Fronteiras de camadas
 
+### Receita gerada e salvamento local
+
+Para o domínio Recipe, resultados remotos são `BusinessModels` de `DomainInterfaces`; a apresentação os converte em modelos próprios quando precisar de estado de UI. Request/response models da API continuam privados em `Data`.
+
+Salvar uma receita é sempre uma ação explícita do usuário, chamada por `SaveRecipeUseCaseProtocol`. O repository concreto em `Data` depende de `PersistentStoringProtocol` e `RecipeImageStoringProtocol`, nunca de `Persistence` concreto. Core Data armazena metadados estruturados e o caminho da imagem; bytes/base64 da imagem ficam em arquivo no diretório do app, nunca no banco.
+
 A camada de apresentação (View, ViewController, ViewModel, Coordinator e Factory de fluxo) não importa nem recebe tipos de `Persistence` ou `PersistenceInterfaces`.
 
 Regras de negócio entram na apresentação somente por Use Cases definidos em `DomainInterfaces`. O Use Case depende de um repositório definido em `DataInterfaces`; a implementação concreta fica em `Data` e é a única camada que interage com `Persistence`/`PersistenceInterfaces`.
@@ -250,6 +307,16 @@ Network      → NetworkInterfaces
 ```
 
 Presentation não importa `Domain`, `Data`, `Persistence` ou `Network`. Domain não importa Data, Persistence ou Network concretos. Data é a fronteira que implementa repositórios e pode usar os contratos de Persistence e Network.
+
+### Modelos e mappers entre camadas
+
+Toda feature que atravessa Presentation, Domain e Data separa seus modelos por responsabilidade:
+
+- `PresentationModel`: estado e identidade necessários à UI (por exemplo `Identifiable`); é interno à feature e não conforma com `Codable` para atender a API.
+- `BusinessModel`: entrada e saída de Use Cases e repositories; fica em `DomainInterfaces`, não conhece SwiftUI, persistência ou transporte.
+- `RemoteModel`: request `Encodable` e response/error `Decodable`; é privado de `Data` e representa o contrato HTTP, inclusive literals e `CodingKeys` específicos da API.
+
+Os mappers ficam na fronteira que os usa: o ViewModel mapeia `PresentationModel → BusinessModel`; o repository em Data mapeia `BusinessModel → RequestRemoteModel` e `ResponseRemoteModel → BusinessModel`. Nunca envie um PresentationModel ao Use Case, nem exponha um RemoteModel em protocolos de Domain/DataInterfaces ou na apresentação.
 
 ### Organização por contexto
 

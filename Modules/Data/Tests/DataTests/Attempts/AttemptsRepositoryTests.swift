@@ -17,6 +17,7 @@ final class AttemptsRepositoryTests: XCTestCase {
         _ = try await sut.fetchAttempts(deviceID: deviceID)
 
         XCTAssertEqual(doubles.receivedEndpoint?.path, "/v1/attempts")
+        XCTAssertEqual(doubles.receivedEndpoint?.headers["Cache-Control"], "no-cache")
         XCTAssertEqual(doubles.receivedEndpoint?.headers["X-Device-ID"], deviceID.uuidString)
         XCTAssertEqual(doubles.receivedEndpoint?.headers["X-API-Key"], "api-key")
     }

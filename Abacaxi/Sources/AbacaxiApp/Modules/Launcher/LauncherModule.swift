@@ -15,14 +15,14 @@ enum LauncherModule {
 
     static func makeCoordinator(
         navigationController: UINavigationController,
-        parent: CoordinatorProtocol,
-        useCaseContainer: UseCaseContainer
+        useCaseContainer: UseCaseContainer,
+        onFinish: @escaping () -> Void
     ) -> CoordinatorProtocol {
         let coordinator = LauncherCoordinator(
             navigationController: navigationController,
-            useCaseContainer: useCaseContainer
+            useCaseContainer: useCaseContainer,
+            onFinish: onFinish
         )
-        coordinator.parentCoordinator = parent
         return coordinator
     }
 }

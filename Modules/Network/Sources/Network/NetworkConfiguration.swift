@@ -9,7 +9,7 @@ public struct NetworkConfiguration {
         self.isLoggingEnabled = isLoggingEnabled
     }
 
-    public enum ConfigurationError: Error {
+    public enum ConfigurationError: Error, Equatable {
         case missingAPIBaseURL
         case invalidAPIBaseURL(String)
     }

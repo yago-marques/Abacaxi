@@ -1,17 +1,17 @@
 import GeneralInterfaces
 import DomainInterfaces
 
-public protocol OnboardingViewModelProtocol {
+protocol OnboardingViewModelProtocol {
     func start()
     func didTapStart()
 }
 
-public final class OnboardingViewModel: OnboardingViewModelProtocol {
+final class OnboardingViewModel: OnboardingViewModelProtocol {
     private let shouldShowOnboardingUseCase: ShouldShowOnboardingUseCaseProtocol
     private let completeOnboardingUseCase: CompleteOnboardingUseCaseProtocol
     private weak var coordinator: CoordinatorProtocol?
 
-    public init(
+    init(
         shouldShowOnboardingUseCase: ShouldShowOnboardingUseCaseProtocol,
         completeOnboardingUseCase: CompleteOnboardingUseCaseProtocol,
         coordinator: CoordinatorProtocol
@@ -21,11 +21,11 @@ public final class OnboardingViewModel: OnboardingViewModelProtocol {
         self.coordinator = coordinator
     }
 
-    public func start() {
+    func start() {
         coordinator?.handle(shouldShowOnboardingUseCase.execute() ? HomeAction.openOnboarding : HomeAction.openHome)
     }
 
-    public func didTapStart() {
+    func didTapStart() {
         completeOnboardingUseCase.execute()
         coordinator?.handle(HomeAction.openHome)
     }

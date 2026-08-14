@@ -4,15 +4,14 @@ import UIKit
 
 final class AppCoordinator: CoordinatorProtocol {
     let navigationController = UINavigationController()
-    var parentCoordinator: CoordinatorProtocol?
 
-    private let makeLauncherCoordinator: (UINavigationController, CoordinatorProtocol) -> CoordinatorProtocol
-    private let makeHomeCoordinator: (UINavigationController, CoordinatorProtocol) -> CoordinatorProtocol
+    private let makeLauncherCoordinator: (UINavigationController, @escaping () -> Void) -> CoordinatorProtocol
+    private let makeHomeCoordinator: (UINavigationController) -> CoordinatorProtocol
     private var childCoordinator: CoordinatorProtocol?
 
     init(
-        makeLauncherCoordinator: @escaping (UINavigationController, CoordinatorProtocol) -> CoordinatorProtocol,
-        makeHomeCoordinator: @escaping (UINavigationController, CoordinatorProtocol) -> CoordinatorProtocol
+        makeLauncherCoordinator: @escaping (UINavigationController, @escaping () -> Void) -> CoordinatorProtocol,
+        makeHomeCoordinator: @escaping (UINavigationController) -> CoordinatorProtocol
     ) {
         self.makeLauncherCoordinator = makeLauncherCoordinator
         self.makeHomeCoordinator = makeHomeCoordinator
@@ -23,24 +22,17 @@ final class AppCoordinator: CoordinatorProtocol {
         startLauncher()
     }
 
-    func handle(_ action: CoordinatorActionProtocol) {
-        if action is CloseFlowAction {
-            startHome()
-            return
-        }
-    }
-
     private func startLauncher() {
-        let launcherCoordinator = makeLauncherCoordinator(navigationController, self)
+        let launcherCoordinator = makeLauncherCoordinator(navigationController) { [weak self] in
+            self?.startHome()
+        }
         childCoordinator = launcherCoordinator
         launcherCoordinator.start()
     }
 
     private func startHome() {
-        let homeCoordinator = makeHomeCoordinator(navigationController, self)
-        childCoordinator = homeCoordinator
-        navigationController.view.transition(.crossDissolve) { [homeCoordinator] in
-            homeCoordinator.start()
+        navigationController.view.transition(.crossDissolve) { [self] in
+            childCoordinator = makeHomeCoordinator(navigationController)
         }
     }
 }

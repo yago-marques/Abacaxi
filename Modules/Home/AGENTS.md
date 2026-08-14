@@ -8,7 +8,7 @@ Primeiro fluxo do app: `HomeCoordinator` (navegação) + `HomeViewModel` + `Home
 
 Textos de interface pertencem ao próprio módulo, em `Sources/Home/Resources/Base.lproj/Localizable.strings`. O SwiftGen da máquina gera `Resources/Generated/L10n.swift` pelo `make start`; use `L10n` em vez de literais em telas. O arquivo gerado não deve ser versionado.
 
-Regra: não importa nenhum outro module de tela. Se `HomeCoordinator` precisar acionar um fluxo de outro module (ex: Auth), isso sobe pro coordinator pai (`AppCoordinator`, no app target) via `parentCoordinator?.handle(_:)` (tipado como `CoordinatorProtocol`) — nunca importando o module de destino direto.
+Regra: não importa nenhum outro module de tela. Se `HomeCoordinator` precisar acionar um fluxo de outro módulo, recebe um callback de navegação pela factory; a composição do app decide o módulo de destino. Nunca importe o módulo de destino diretamente.
 
 Testar: `xcodebuild -project Abacaxi.xcodeproj -scheme HomeTests -destination 'platform=iOS Simulator,name=iPhone 16' test`, ou `Scripts/on-write-code-check.sh Modules/Home/Tests/HomeTests/<arquivo>.swift`.
 

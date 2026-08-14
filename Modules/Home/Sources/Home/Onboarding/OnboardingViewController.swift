@@ -3,7 +3,7 @@ import Extensions
 import GeneralInterfaces
 import UIKit
 
-public final class OnboardingViewController: UIViewController {
+final class OnboardingViewController: UIViewController {
     private let viewModel: OnboardingViewModelProtocol
 
     private lazy var brandImageView: UIImageView = {
@@ -48,7 +48,7 @@ public final class OnboardingViewController: UIViewController {
         return button
     }()
 
-    public init(viewModel: OnboardingViewModelProtocol) {
+    init(viewModel: OnboardingViewModelProtocol) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
@@ -57,7 +57,7 @@ public final class OnboardingViewController: UIViewController {
         nil
     }
 
-    override public func viewDidLoad() {
+    override func viewDidLoad() {
         super.viewDidLoad()
         buildLayout()
         viewModel.start()
@@ -70,11 +70,11 @@ public final class OnboardingViewController: UIViewController {
 }
 
 extension OnboardingViewController: ViewCoding {
-    public func setupView() {
+    func setupView() {
         view.backgroundColor = DSColor.background
     }
 
-    public func setupHierarchy() {
+    func setupHierarchy() {
         view.addSubviews(
             brandImageView,
             pineappleImageView,
@@ -83,7 +83,7 @@ extension OnboardingViewController: ViewCoding {
         )
     }
 
-    public func setupConstraints() {
+    func setupConstraints() {
         brandImageView
             .top(to: view.safeAreaLayoutGuide.topAnchor, constant: DSSpacing.small)
             .centerX(to: view.centerXAnchor)

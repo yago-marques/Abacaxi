@@ -21,3 +21,6 @@
 
 /* Supporting text displayed on the recipe creation card. */
 "home.recipeCreationCard.subtitle" = "Crie uma receita personalizada com os ingredientes que você tem em casa.";
+"home.savedRecipes.shortcut" = "Minhas receitas";
+"home.savedRecipesCard.title" = "Minhas receitas";
+"home.savedRecipesCard.subtitle" = "Encontre as receitas personalizadas que você salvou.";

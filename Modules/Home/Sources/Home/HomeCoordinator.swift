@@ -2,25 +2,28 @@ import Extensions
 import GeneralInterfaces
 import UIKit
 
-public final class HomeCoordinator: CoordinatorProtocol {
-    public let navigationController: UINavigationController
-    public weak var parentCoordinator: CoordinatorProtocol?
+final class HomeCoordinator: CoordinatorProtocol {
+    let navigationController: UINavigationController
 
     private let useCaseContainer: UseCaseContainer
+    private let externalRouter: HomeExternalRouterProtocol
+    private var childCoordinator: CoordinatorProtocol?
 
-    public init(
+    init(
         navigationController: UINavigationController,
-        useCaseContainer: UseCaseContainer
+        useCaseContainer: UseCaseContainer,
+        externalRouter: HomeExternalRouterProtocol
     ) {
         self.navigationController = navigationController
         self.useCaseContainer = useCaseContainer
+        self.externalRouter = externalRouter
     }
 
-    public func start() {
+    func start() {
         showOnboarding()
     }
 
-    public func handle(_ action: CoordinatorActionProtocol) {
+    func handle(_ action: CoordinatorActionProtocol) {
         guard let action = action as? HomeAction else { return }
 
         switch action {
@@ -29,11 +32,18 @@ public final class HomeCoordinator: CoordinatorProtocol {
         case .openOnboarding:
             guard !(navigationController.viewControllers.first is OnboardingViewController) else { return }
             showOnboarding()
+        case .openRecipeCreation:
+            childCoordinator = externalRouter.openRecipeCreation()
+        case .openSavedRecipes:
+            childCoordinator = externalRouter.openSavedRecipes()
         }
     }
 
     private func showHome() {
-        let homeViewController = HomeFactory.makeViewController(useCaseContainer: useCaseContainer)
+        let homeViewController = HomeFactory.makeViewController(
+            useCaseContainer: useCaseContainer,
+            coordinator: self
+        )
         navigationController.view.transition(.crossDissolve) { [navigationController, homeViewController] in
             navigationController.setViewControllers([homeViewController], animated: false)
         }

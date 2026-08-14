@@ -39,6 +39,7 @@ private extension AttemptsRepository {
 
         var headers: HTTPHeaders {
             [
+                "Cache-Control": "no-cache",
                 "X-Device-ID": deviceID.uuidString,
                 "X-API-Key": apiKey
             ]

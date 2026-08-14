@@ -2,8 +2,8 @@ import GeneralInterfaces
 import DomainInterfaces
 import UIKit
 
-public enum OnboardingFactory {
-    public static func makeViewController(
+enum OnboardingFactory {
+    static func makeViewController(
         useCaseContainer: UseCaseContainer,
         coordinator: CoordinatorProtocol
     ) -> UIViewController {

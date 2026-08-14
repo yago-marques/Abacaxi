@@ -41,19 +41,3 @@ final class NetworkConfigurationTests: XCTestCase {
         return try XCTUnwrap(Bundle(url: directory))
     }
 }
-
-extension NetworkConfiguration.ConfigurationError: Equatable {
-    public static func == (
-        lhs: NetworkConfiguration.ConfigurationError,
-        rhs: NetworkConfiguration.ConfigurationError
-    ) -> Bool {
-        switch (lhs, rhs) {
-        case (.missingAPIBaseURL, .missingAPIBaseURL):
-            return true
-        case let (.invalidAPIBaseURL(lhsValue), .invalidAPIBaseURL(rhsValue)):
-            return lhsValue == rhsValue
-        default:
-            return false
-        }
-    }
-}

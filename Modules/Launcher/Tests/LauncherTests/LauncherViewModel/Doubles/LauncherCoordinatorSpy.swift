@@ -4,7 +4,6 @@ import UIKit
 
 final class LauncherCoordinatorSpy: CoordinatorProtocol {
     let navigationController = UINavigationController()
-    weak var parentCoordinator: CoordinatorProtocol?
 
     private(set) var receivedAction: LauncherAction?
 

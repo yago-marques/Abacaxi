@@ -1,6 +1,8 @@
 import GeneralInterfaces
 
-public enum HomeAction: CoordinatorActionProtocol, Equatable {
+enum HomeAction: CoordinatorActionProtocol, Equatable {
     case openHome
     case openOnboarding
+    case openRecipeCreation
+    case openSavedRecipes
 }

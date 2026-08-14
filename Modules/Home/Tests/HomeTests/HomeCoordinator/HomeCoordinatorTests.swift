@@ -35,6 +35,22 @@ final class HomeCoordinatorTests: XCTestCase {
 
         XCTAssertTrue(doubles.navigationController.viewControllers.first is OnboardingViewController)
     }
+
+    func test_handle_whenOpeningRecipeCreation_usesTheExternalRouter() {
+        let (sut, doubles) = makeSUTAndDoubles()
+
+        sut.handle(HomeAction.openRecipeCreation)
+
+        XCTAssertTrue(doubles.externalRouter.openRecipeCreationCalled)
+    }
+
+    func test_handle_whenOpeningSavedRecipes_usesTheExternalRouter() {
+        let (sut, doubles) = makeSUTAndDoubles()
+
+        sut.handle(HomeAction.openSavedRecipes)
+
+        XCTAssertTrue(doubles.externalRouter.openSavedRecipesCalled)
+    }
 }
 
 private extension HomeCoordinatorTests {
@@ -43,7 +59,9 @@ private extension HomeCoordinatorTests {
         navigationController: UINavigationController,
         shouldShowOnboardingUseCase: ShouldShowOnboardingUseCaseStub,
         completeOnboardingUseCase: CompleteOnboardingUseCaseSpy,
-        getRemainingAttemptsUseCase: GetRemainingAttemptsUseCaseStub
+        getRemainingAttemptsUseCase: GetRemainingAttemptsUseCaseStub,
+        hasSavedRecipesUseCase: HasSavedRecipesUseCaseStub,
+        externalRouter: HomeExternalRouterStub
     )
 
     private func makeSUTAndDoubles() -> (sut: SUT, doubles: Doubles) {
@@ -51,6 +69,9 @@ private extension HomeCoordinatorTests {
         let shouldShowOnboardingUseCase = ShouldShowOnboardingUseCaseStub()
         let completeOnboardingUseCase = CompleteOnboardingUseCaseSpy()
         let getRemainingAttemptsUseCase = GetRemainingAttemptsUseCaseStub()
+        let hasSavedRecipesUseCase = HasSavedRecipesUseCaseStub()
+        let externalRouter = HomeExternalRouterStub()
+        externalRouter.stubbedCoordinator = HomeCoordinatorSpy()
         getRemainingAttemptsUseCase.stubbedResult = .success(
             RemainingAttempts(remaining: 17, limit: 20, windowSeconds: 3_600)
         )
@@ -67,9 +88,14 @@ private extension HomeCoordinatorTests {
             GetRemainingAttemptsUseCaseProtocol.self,
             instance: getRemainingAttemptsUseCase
         )
+        useCaseContainer.registerSingleton(
+            HasSavedRecipesUseCaseProtocol.self,
+            instance: hasSavedRecipesUseCase
+        )
         let sut = HomeCoordinator(
             navigationController: navigationController,
-            useCaseContainer: useCaseContainer
+            useCaseContainer: useCaseContainer,
+            externalRouter: externalRouter
         )
         return (
             sut,
@@ -77,7 +103,9 @@ private extension HomeCoordinatorTests {
                 navigationController,
                 shouldShowOnboardingUseCase,
                 completeOnboardingUseCase,
-                getRemainingAttemptsUseCase
+                getRemainingAttemptsUseCase,
+                hasSavedRecipesUseCase,
+                externalRouter
             )
         )
     }

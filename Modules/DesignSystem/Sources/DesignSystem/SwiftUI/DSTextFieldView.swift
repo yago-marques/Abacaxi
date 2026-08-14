@@ -47,3 +47,35 @@ public struct DSTextFieldView: View {
         }
     }
 }
+
+public struct DSSearchField: View {
+    private let placeholder: String
+    @Binding private var text: String
+    @FocusState private var isFocused: Bool
+
+    public init(_ placeholder: String, text: Binding<String>) {
+        self.placeholder = placeholder
+        _text = text
+    }
+
+    public var body: some View {
+        HStack(spacing: DSSpacing.small) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(Color.dsTextSecondary)
+            TextField(
+                "",
+                text: $text,
+                prompt: Text(placeholder).foregroundColor(Color.dsTextSecondary)
+            )
+            .font(.dsBody)
+            .foregroundStyle(Color.dsTextPrimary)
+            .focused($isFocused)
+        }
+        .padding(.horizontal, DSSpacing.medium)
+        .frame(minHeight: 56)
+        .overlay {
+            RoundedRectangle(cornerRadius: DSBorder.radius)
+                .strokeBorder(isFocused ? Color.dsAccent : .dsBorder, lineWidth: DSBorder.width)
+        }
+    }
+}

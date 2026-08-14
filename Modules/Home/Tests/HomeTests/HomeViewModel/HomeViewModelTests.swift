@@ -17,16 +17,36 @@ final class HomeViewModelTests: XCTestCase {
 
     func test_load_whenAttemptsAreAvailable_updatesTheDisplayedRemainingCount() async {
         let (sut, doubles) = makeSUTAndDoubles()
-        doubles.stubbedResult = .success(RemainingAttempts(remaining: 17, limit: 20, windowSeconds: 3_600))
+        doubles.getRemainingAttemptsUseCase.stubbedResult = .success(
+            RemainingAttempts(remaining: 17, limit: 20, windowSeconds: 3_600)
+        )
 
         await sut.load()
 
         XCTAssertEqual(sut.state.dailyAttemptsText, "17 tentativas hoje")
     }
 
+    func test_load_whenSavedRecipesExist_showsTheSavedRecipesShortcut() async {
+        let (sut, doubles) = makeSUTAndDoubles()
+        doubles.hasSavedRecipesUseCase.stubbedResult = .success(true)
+
+        await sut.load()
+
+        XCTAssertTrue(sut.state.showsSavedRecipesShortcut)
+    }
+
+    func test_load_whenSavedRecipesDoNotExist_hidesTheSavedRecipesShortcut() async {
+        let (sut, doubles) = makeSUTAndDoubles()
+        doubles.hasSavedRecipesUseCase.stubbedResult = .success(false)
+
+        await sut.load()
+
+        XCTAssertFalse(sut.state.showsSavedRecipesShortcut)
+    }
+
     func test_load_whenAttemptsAreUnavailable_updatesTheUnavailableState() async {
         let (sut, doubles) = makeSUTAndDoubles()
-        doubles.stubbedResult = .failure(StubbedError.unavailable)
+        doubles.getRemainingAttemptsUseCase.stubbedResult = .failure(StubbedError.unavailable)
 
         await sut.load()
 
@@ -36,15 +56,22 @@ final class HomeViewModelTests: XCTestCase {
 
 private extension HomeViewModelTests {
     private typealias SUT = HomeViewModel
-    private typealias Doubles = GetRemainingAttemptsUseCaseStub
+    private typealias Doubles = (
+        getRemainingAttemptsUseCase: GetRemainingAttemptsUseCaseStub,
+        hasSavedRecipesUseCase: HasSavedRecipesUseCaseStub
+    )
 
     private enum StubbedError: Error {
         case unavailable
     }
 
     private func makeSUTAndDoubles() -> (sut: SUT, doubles: Doubles) {
-        let useCase = GetRemainingAttemptsUseCaseStub()
-        let sut = HomeViewModel(getRemainingAttemptsUseCase: useCase)
-        return (sut, useCase)
+        let getRemainingAttemptsUseCase = GetRemainingAttemptsUseCaseStub()
+        let hasSavedRecipesUseCase = HasSavedRecipesUseCaseStub()
+        let sut = HomeViewModel(
+            getRemainingAttemptsUseCase: getRemainingAttemptsUseCase,
+            hasSavedRecipesUseCase: hasSavedRecipesUseCase
+        )
+        return (sut, (getRemainingAttemptsUseCase, hasSavedRecipesUseCase))
     }
 }

@@ -7,8 +7,11 @@ let package = Package(
     products: [
         .library(name: "DataInterfaces", targets: ["DataInterfaces"])
     ],
+    dependencies: [
+        .package(path: "../DomainInterfaces")
+    ],
     targets: [
-        .target(name: "DataInterfaces"),
+        .target(name: "DataInterfaces", dependencies: ["DomainInterfaces"]),
         .testTarget(name: "DataInterfacesTests", dependencies: ["DataInterfaces"])
     ]
 )

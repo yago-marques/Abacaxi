@@ -1,0 +1,7 @@
+strings:
+  inputs: Resources
+  outputs:
+    - templateName: structured-swift5
+      output: Resources/Generated/L10n.swift
+      params:
+        bundle: Bundle.module

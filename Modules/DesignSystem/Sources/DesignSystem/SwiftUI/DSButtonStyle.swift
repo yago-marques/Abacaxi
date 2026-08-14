@@ -5,6 +5,7 @@ public struct DSButtonStyle: ButtonStyle {
         case primary
         case secondary
         case text
+        case destructive
     }
 
     private let variant: Variant
@@ -20,7 +21,7 @@ public struct DSButtonStyle: ButtonStyle {
                 .textCase(.uppercase)
             HStack {
                 Spacer()
-                Image(systemName: "play.fill")
+                Image(systemName: accessoryImageName)
                     .font(.system(size: 28, weight: .bold))
             }
         }
@@ -47,20 +48,37 @@ public struct DSButtonStyle: ButtonStyle {
         case .primary: .black
         case .secondary: .dsPrimary
         case .text: .dsTextPrimary
+        case .destructive: .dsError
         }
     }
 
     private var borderColor: Color {
-        variant == .secondary ? .dsPrimary : .clear
+        switch variant {
+        case .secondary: .dsPrimary
+        case .destructive: .dsError
+        case .primary, .text: .clear
+        }
     }
 
     private var borderWidth: CGFloat {
-        variant == .secondary ? DSBorder.width : 0
+        switch variant {
+        case .secondary, .destructive: DSBorder.width
+        case .primary, .text: 0
+        }
     }
+
+    private var accessoryImageName: String {
+        switch variant {
+        case .destructive: "xmark"
+        case .primary, .secondary, .text: "play.fill"
+        }
+    }
+
 }
 
 public extension ButtonStyle where Self == DSButtonStyle {
     static var dsPrimary: DSButtonStyle { DSButtonStyle() }
     static var dsSecondary: DSButtonStyle { DSButtonStyle(variant: .secondary) }
     static var dsText: DSButtonStyle { DSButtonStyle(variant: .text) }
+    static var dsDestructive: DSButtonStyle { DSButtonStyle(variant: .destructive) }
 }

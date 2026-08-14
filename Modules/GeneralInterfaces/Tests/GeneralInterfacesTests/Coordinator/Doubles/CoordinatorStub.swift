@@ -11,7 +11,6 @@ final class CoordinatorStub: CoordinatorProtocol {
     private(set) var startCalled = false
     private(set) var handledAction: CoordinatorActionProtocol?
     var navigationController: UINavigationController = .init()
-    weak var parentCoordinator: CoordinatorProtocol?
 
     func start() {
         startCalled = true

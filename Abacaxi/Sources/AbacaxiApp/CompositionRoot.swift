@@ -5,19 +5,19 @@ enum CompositionRoot {
         let useCaseContainer = UseCaseContainer()
         LauncherModule.registerDependencies(in: useCaseContainer)
         HomeModule.registerDependencies(in: useCaseContainer)
+        RecipeModule.registerDependencies(in: useCaseContainer)
 
         return AppCoordinator(
-            makeLauncherCoordinator: { navigationController, parent in
+            makeLauncherCoordinator: { navigationController, onFinish in
                 LauncherModule.makeCoordinator(
                     navigationController: navigationController,
-                    parent: parent,
-                    useCaseContainer: useCaseContainer
+                    useCaseContainer: useCaseContainer,
+                    onFinish: onFinish
                 )
             },
-            makeHomeCoordinator: { navigationController, parent in
-                HomeModule.makeCoordinator(
+            makeHomeCoordinator: { navigationController in
+                HomeModule.start(
                     navigationController: navigationController,
-                    parent: parent,
                     useCaseContainer: useCaseContainer
                 )
             }

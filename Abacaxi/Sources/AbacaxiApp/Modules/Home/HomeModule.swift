@@ -1,6 +1,7 @@
 import GeneralInterfaces
 import Home
 import DomainInterfaces
+import Recipe
 import UIKit
 
 enum HomeModule {
@@ -16,16 +17,20 @@ enum HomeModule {
         }
     }
 
-    static func makeCoordinator(
+    @discardableResult
+    static func start(
         navigationController: UINavigationController,
-        parent: CoordinatorProtocol,
         useCaseContainer: UseCaseContainer
     ) -> CoordinatorProtocol {
-        let coordinator = HomeCoordinator(
+        let coordinator = HomeModuleFactory.makeCoordinator(
             navigationController: navigationController,
-            useCaseContainer: useCaseContainer
+            useCaseContainer: useCaseContainer,
+            externalRouter: HomeExternalRouter(
+                navigationController: navigationController,
+                useCaseContainer: useCaseContainer
+            )
         )
-        coordinator.parentCoordinator = parent
+        coordinator.start()
         return coordinator
     }
 }
