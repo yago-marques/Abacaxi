@@ -24,9 +24,8 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          show_full_output: true
           claude_args: |
-            --allowedTools "Read,Grep,Glob,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*),mcp__github_inline_comment__create_inline_comment"
+            --allowedTools "Read,Grep,Glob,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*),Bash(gh pr review:*),mcp__github_inline_comment__create_inline_comment"
             --model claude-sonnet-5
             --max-turns 30
           prompt: |
@@ -56,11 +55,23 @@ jobs:
             NÃO comente: estilo já coberto pelo SwiftLint (o CI roda lint-strict),
             preferências pessoais sem regra correspondente, ou código fora do diff.
 
+            Classifique cada achado por severidade:
+            - CRÍTICO: violação de fronteira de camada (feature importando concreto de
+              infra, erro cru atravessando camadas), mudança de comportamento sem teste,
+              fatalError/force-unwrap em código de produção, segredo ou credencial
+              hardcoded, remoção/enfraquecimento de teste existente;
+            - ATENÇÃO: violação explícita de CODE_RULES sem impacto imediato de runtime
+              (naming, L10n, organização de arquivo, doubles fora do padrão);
+            - SUGESTÃO: melhoria alinhada às regras, sem violação.
+
             Para cada violação concreta, crie um comentário inline na linha exata
-            usando a ferramenta de inline comment, citando a regra violada e sugerindo
-            a correção no padrão do repositório. Ao final, publique um comentário de
-            resumo com: veredito geral, contagem de achados por severidade e os pontos
-            positivos do PR. Se não houver violações, publique apenas o resumo dizendo
-            que o PR segue as regras.
+            usando a ferramenta de inline comment, citando a regra violada e a severidade,
+            e sugerindo a correção no padrão do repositório.
+
+            Ao final, submeta o veredito formal:
+            - Se houver 1+ achado CRÍTICO: `gh pr review <número> --request-changes --body "<resumo>"`;
+            - Caso contrário: `gh pr review <número> --comment --body "<resumo>"`.
+            O resumo deve conter: veredito, contagem de achados por severidade e os
+            pontos positivos do PR. Nunca use --approve.
 
             Escreva TODOS os comentários (inline e resumo) em português do Brasil.
