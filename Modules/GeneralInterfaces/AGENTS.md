@@ -6,4 +6,4 @@ Regra: todo module de tela (`Home`, e os que vierem depois) conforma `Coordinato
 
 Testar: `xcodebuild -project Abacaxi.xcodeproj -scheme GeneralInterfacesTests -destination 'platform=iOS Simulator,name=iPhone 16' test`, ou `Scripts/on-write-code-check.sh Modules/GeneralInterfaces/Tests/GeneralInterfacesTests/<arquivo>.swift`.
 
-Convenções gerais (estrutura de teste, hook de lint) estão no `AGENTS.md` da raiz e em `.claude/CODE_STYLE.md`.
+Convenções gerais (estrutura de teste, hook de lint) estão no `AGENTS.md` da raiz e em `.claude/CODE_RULES/00-overview.md`.

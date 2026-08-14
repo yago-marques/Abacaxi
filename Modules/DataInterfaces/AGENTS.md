@@ -4,4 +4,4 @@ Contratos de dados: `DeviceIDRepositoryProtocol` (`save(_:)`/`load()`, `throws`)
 
 Testar: `cd Modules/DataInterfaces && swift test` — funciona direto, sem Xcode.
 
-Convenções gerais (estrutura de teste, hook de lint) estão no `AGENTS.md` da raiz e em `.claude/CODE_STYLE.md`.
+Convenções gerais (estrutura de teste, hook de lint) estão no `AGENTS.md` da raiz e em `.claude/CODE_RULES/00-overview.md`.

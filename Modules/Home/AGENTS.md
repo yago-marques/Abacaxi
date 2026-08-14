@@ -12,4 +12,4 @@ Regra: não importa nenhum outro module de tela. Se `HomeCoordinator` precisar a
 
 Testar: `xcodebuild -project Abacaxi.xcodeproj -scheme HomeTests -destination 'platform=iOS Simulator,name=iPhone 16' test`, ou `Scripts/on-write-code-check.sh Modules/Home/Tests/HomeTests/<arquivo>.swift`.
 
-Convenções gerais (estrutura de teste, hook de lint) estão no `AGENTS.md` da raiz e em `.claude/CODE_STYLE.md`.
+Convenções gerais (estrutura de teste, hook de lint) estão no `AGENTS.md` da raiz e em `.claude/CODE_RULES/00-overview.md`.

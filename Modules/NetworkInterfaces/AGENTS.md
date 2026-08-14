@@ -6,4 +6,4 @@ Regra: nada aqui pode importar `Network` (ou qualquer outro module concreto). É
 
 Testar: `cd Modules/NetworkInterfaces && swift test` — funciona direto, sem Xcode.
 
-Convenções gerais (estrutura de teste, hook de lint) estão no `AGENTS.md` da raiz e em `.claude/CODE_STYLE.md`.
+Convenções gerais (estrutura de teste, hook de lint) estão no `AGENTS.md` da raiz e em `.claude/CODE_RULES/00-overview.md`.

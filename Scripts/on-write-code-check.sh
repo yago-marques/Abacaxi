@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Runs after an agent writes/edits Swift code: lints via SwiftLint, runs the
-# affected unit-test scheme, and surfaces CODE_STYLE.md for self-checking.
+# affected unit-test scheme, and surfaces contextual code rules for self-checking.
 # Shared entry point for both the Claude Code PostToolUse hook (automatic) and
 # Codex, whose AGENTS.md instructs it to call this manually after Swift edits.
 set -euo pipefail
@@ -60,6 +60,39 @@ run_tests() {
   done
 }
 
+print_code_rules() {
+  local rule_files=("00-overview.md")
+  local relative_path="${file_path#$repo_root/}"
+
+  if [[ -z "$file_path" ]]; then
+    rule_files+=(
+      "10-testing.md"
+      "20-swift.md"
+      "30-architecture.md"
+      "40-uikit.md"
+      "50-validation.md"
+    )
+  elif [[ "$relative_path" == */Tests/* ]]; then
+    rule_files+=("10-testing.md" "20-swift.md" "50-validation.md")
+  else
+    rule_files+=("20-swift.md" "30-architecture.md")
+
+    if [[ "$file_path" == *View.swift || "$file_path" == *ViewController.swift ]] || \
+      rg -q '^import (UIKit|SwiftUI)$' "$file_path"; then
+      rule_files+=("40-uikit.md")
+    fi
+
+    rule_files+=("50-validation.md")
+  fi
+
+  local rule_file
+  for rule_file in "${rule_files[@]}"; do
+    echo
+    echo "---- CODE_RULES/$rule_file ----"
+    cat "$repo_root/.claude/CODE_RULES/$rule_file"
+  done
+}
+
 lint_status=0
 lint_output="$("$repo_root/Scripts/swiftlint.sh" 2>&1)" || lint_status=$?
 
@@ -68,11 +101,7 @@ echo "$lint_output"
 test_status=0
 run_tests || test_status=$?
 
-if [[ -s "$repo_root/.claude/CODE_STYLE.md" ]]; then
-  echo
-  echo "---- CODE_STYLE.md (check the code above against this) ----"
-  cat "$repo_root/.claude/CODE_STYLE.md"
-fi
+print_code_rules
 
 if [[ "$lint_status" -ne 0 ]]; then
   exit "$lint_status"
