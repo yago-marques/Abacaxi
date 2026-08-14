@@ -1,6 +1,7 @@
 import GeneralInterfaces
 
+@MainActor
 public protocol HomeExternalRouterProtocol {
-    func openRecipeCreation() -> CoordinatorProtocol
-    func openSavedRecipes() -> CoordinatorProtocol
+    func openRecipeCreation(onFinish: @escaping () -> Void) -> CoordinatorProtocol
+    func openSavedRecipes(onFinish: @escaping () -> Void) -> CoordinatorProtocol
 }

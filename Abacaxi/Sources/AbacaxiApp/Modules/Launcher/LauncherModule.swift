@@ -13,6 +13,7 @@ enum LauncherModule {
         }
     }
 
+    @MainActor
     static func makeCoordinator(
         navigationController: UINavigationController,
         useCaseContainer: UseCaseContainer,

@@ -37,14 +37,14 @@ final class HTTPEndpointTests: XCTestCase {
         }
 
         let endpoint = CreateAccountEndpoint(
-            body: try XCTUnwrap("{}".data(using: .utf8)),
+            body: Data("{}".utf8),
             baseURL: try XCTUnwrap(URL(string: "https://auth.example.com"))
         )
 
         XCTAssertEqual(endpoint.method, .post)
         XCTAssertEqual(endpoint.headers["X-Custom"], "value")
         XCTAssertEqual(endpoint.queryItems, [URLQueryItem(name: "dryRun", value: "true")])
-        XCTAssertEqual(endpoint.body, "{}".data(using: .utf8))
+        XCTAssertEqual(endpoint.body, Data("{}".utf8))
         XCTAssertEqual(endpoint.baseURL, URL(string: "https://auth.example.com"))
     }
 }

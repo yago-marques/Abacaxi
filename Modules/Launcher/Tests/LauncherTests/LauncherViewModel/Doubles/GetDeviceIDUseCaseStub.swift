@@ -2,9 +2,9 @@ import DomainInterfaces
 import Foundation
 
 final class GetDeviceIDUseCaseStub: GetDeviceIDUseCaseProtocol {
-    var stubbedID: UUID?
+    var stubbedResult: Result<UUID?, Error> = .success(nil)
 
     func execute() throws -> UUID? {
-        stubbedID
+        try stubbedResult.get()
     }
 }

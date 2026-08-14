@@ -54,6 +54,24 @@ public final class DSCardView: UIView {
         clipsToBounds = true
         translatesAutoresizingMaskIntoConstraints = false
 
+        configureLabels(title: title, description: description, isDark: isDark)
+
+        let stackView = UIStackView(arrangedSubviews: [titleLabel, descriptionLabel])
+        stackView.axis = .vertical
+        stackView.spacing = DSSpacing.small
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(stackView)
+
+        configureImageView(stackView: stackView)
+        configureForwardIndicator(stackView: stackView, isDark: isDark)
+
+        NSLayoutConstraint.activate([
+            stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: DSSpacing.large),
+            stackView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -DSSpacing.large)
+        ])
+    }
+
+    private func configureLabels(title: String, description: String, isDark: Bool) {
         titleLabel.text = title.uppercased()
         titleLabel.font = DSTypography.title
         titleLabel.textColor = isDark ? DSColor.textPrimary : .black
@@ -63,13 +81,9 @@ public final class DSCardView: UIView {
         descriptionLabel.font = DSTypography.body
         descriptionLabel.textColor = isDark ? DSColor.textSecondary : .darkGray
         descriptionLabel.numberOfLines = 0
+    }
 
-        let stackView = UIStackView(arrangedSubviews: [titleLabel, descriptionLabel])
-        stackView.axis = .vertical
-        stackView.spacing = DSSpacing.small
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(stackView)
-
+    private func configureImageView(stackView: UIStackView) {
         if let imageView {
             imageView.contentMode = .scaleAspectFit
             imageView.clipsToBounds = true
@@ -86,7 +100,9 @@ public final class DSCardView: UIView {
         } else {
             stackView.topAnchor.constraint(equalTo: topAnchor, constant: DSSpacing.large).isActive = true
         }
+    }
 
+    private func configureForwardIndicator(stackView: UIStackView, isDark: Bool) {
         if let forwardIndicatorImageView {
             forwardIndicatorImageView.accessibilityIdentifier = "dsCardForwardIndicator"
             forwardIndicatorImageView.contentMode = .scaleAspectFit
@@ -113,10 +129,5 @@ public final class DSCardView: UIView {
         } else {
             stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -DSSpacing.large).isActive = true
         }
-
-        NSLayoutConstraint.activate([
-            stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: DSSpacing.large),
-            stackView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -DSSpacing.large)
-        ])
     }
 }

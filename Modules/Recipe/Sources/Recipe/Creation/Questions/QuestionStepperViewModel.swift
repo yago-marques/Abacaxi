@@ -2,6 +2,7 @@ import Combine
 import DomainInterfaces
 import Foundation
 
+@MainActor
 protocol QuestionStepperViewModelProtocol: AnyObject {
     var currentQuestion: RecipeQuestionPresentationModel { get }
     var currentIndex: Int { get }
@@ -19,6 +20,7 @@ protocol QuestionStepperViewModelProtocol: AnyObject {
     func goBack()
 }
 
+@MainActor
 final class QuestionStepperViewModel: ObservableObject, QuestionStepperViewModelProtocol {
     private enum Answer: Equatable {
         case option(String)

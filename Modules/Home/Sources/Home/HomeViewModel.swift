@@ -9,26 +9,9 @@ struct HomeViewState: Equatable {
     let savedRecipesCardTitle: String
     let savedRecipesCardSubtitle: String
     let showsSavedRecipesShortcut: Bool
-
-    init(
-        title: String,
-        dailyAttemptsText: String,
-        recipeCreationCardTitle: String,
-        recipeCreationCardSubtitle: String,
-        savedRecipesCardTitle: String,
-        savedRecipesCardSubtitle: String,
-        showsSavedRecipesShortcut: Bool
-    ) {
-        self.title = title
-        self.dailyAttemptsText = dailyAttemptsText
-        self.recipeCreationCardTitle = recipeCreationCardTitle
-        self.recipeCreationCardSubtitle = recipeCreationCardSubtitle
-        self.savedRecipesCardTitle = savedRecipesCardTitle
-        self.savedRecipesCardSubtitle = savedRecipesCardSubtitle
-        self.showsSavedRecipesShortcut = showsSavedRecipesShortcut
-    }
 }
 
+@MainActor
 protocol HomeViewModelProtocol: AnyObject {
     var state: HomeViewState { get }
     func load() async
@@ -36,6 +19,7 @@ protocol HomeViewModelProtocol: AnyObject {
     func didTapSavedRecipes()
 }
 
+@MainActor
 final class HomeViewModel: HomeViewModelProtocol {
     private let getRemainingAttemptsUseCase: GetRemainingAttemptsUseCaseProtocol
     private let hasSavedRecipesUseCase: HasSavedRecipesUseCaseProtocol

@@ -8,6 +8,7 @@ enum SavedRecipesViewState: Equatable {
     case error
 }
 
+@MainActor
 final class SavedRecipesViewModel: ObservableObject {
     private let getSavedRecipesUseCase: GetSavedRecipesUseCaseProtocol
 

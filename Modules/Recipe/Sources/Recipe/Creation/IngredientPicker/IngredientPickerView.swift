@@ -8,13 +8,17 @@ struct IngredientPickerView: View {
     @State private var isLoadingPresented = false
     @State private var pendingFeedback: IngredientPickerFeedback?
     @State private var toastRequest: DSToastRequest?
+    @State private var fetchTask: Task<Void, Never>?
     private let onBack: () -> Void
     private let onQuestionsLoaded: ([RecipeIngredientBusinessModel], [RecipeQuestionPresentationModel]) -> Void
 
     init(
         viewModel: IngredientPickerViewModel,
         onBack: @escaping () -> Void = {},
-        onQuestionsLoaded: @escaping ([RecipeIngredientBusinessModel], [RecipeQuestionPresentationModel]) -> Void = { _, _ in }
+        onQuestionsLoaded: @escaping (
+            [RecipeIngredientBusinessModel],
+            [RecipeQuestionPresentationModel]
+        ) -> Void = { _, _ in }
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.onBack = onBack
@@ -51,6 +55,10 @@ struct IngredientPickerView: View {
         }
         .sheet(item: $viewModel.ingredientBeingEdited) { ingredient in
             QuantitySheet(ingredient: ingredient, viewModel: viewModel)
+        }
+        .onDisappear {
+            fetchTask?.cancel()
+            fetchTask = nil
         }
     }
 
@@ -125,15 +133,18 @@ struct IngredientPickerView: View {
     }
 
     private func fetchQuestions() {
-        Task {
+        fetchTask = Task {
             let startedAt = Date()
             isLoadingPresented = true
             let questions = await viewModel.fetchQuestions()
 
             let elapsed = Date().timeIntervalSince(startedAt)
-            let remainingDuration = max(0, 2 - elapsed)
+            // Keeps the AI-loading screen visible long enough to be readable
+            // even when the questions request resolves instantly.
+            let minimumLoadingDuration: TimeInterval = 2
+            let remainingDuration = max(0, minimumLoadingDuration - elapsed)
             if remainingDuration > 0 {
-                try? await Task.sleep(nanoseconds: UInt64(remainingDuration * 1_000_000_000))
+                try? await Task.sleep(for: .seconds(remainingDuration))
             }
 
             isLoadingPresented = false
@@ -174,11 +185,12 @@ struct IngredientPickerView: View {
             return L10n.IngredientPicker.rateLimitedToast
         case .temporarilyUnavailable:
             return L10n.IngredientPicker.temporarilyUnavailableToast
+        case .noConnection:
+            return L10n.IngredientPicker.noConnectionToast
         case .requestFailed:
             return L10n.IngredientPicker.requestFailedToast
         }
     }
-
 }
 
 private struct QuantitySheet: View {

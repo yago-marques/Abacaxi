@@ -26,7 +26,7 @@ public final class GetRecipeQuestionsUseCase: GetRecipeQuestionsUseCaseProtocol 
     }
 
     public func execute(ingredients: [RecipeIngredientBusinessModel]) async throws -> [RecipeQuestionBusinessModel] {
-        guard (2...15).contains(ingredients.count) else {
+        guard IngredientLimits.range.contains(ingredients.count) else {
             throw GetRecipeQuestionsError.invalidIngredientCount
         }
         guard let deviceID = try deviceIDRepository.load() else {
@@ -40,6 +40,8 @@ public final class GetRecipeQuestionsUseCase: GetRecipeQuestionsUseCaseProtocol 
             case .rateLimited: GetRecipeQuestionsError.rateLimited
             case .temporarilyUnavailable: GetRecipeQuestionsError.temporarilyUnavailable
             case .invalidResponse: GetRecipeQuestionsError.invalidResponse
+            case .network: GetRecipeQuestionsError.noConnection
+            case .cancelled: GetRecipeQuestionsError.cancelled
             }
         }
     }

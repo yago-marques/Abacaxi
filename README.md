@@ -2,11 +2,17 @@
 
 <img width="180" height="180" alt="Abacaxi" src="https://github.com/user-attachments/assets/40342f27-1343-4d34-a791-fb7181661fff" />
 
+[![CI](https://github.com/yago-marques/Abacaxi/actions/workflows/ci.yml/badge.svg)](https://github.com/yago-marques/Abacaxi/actions/workflows/ci.yml)
+
 **Abacaxi** é um app iOS que transforma ingredientes disponíveis em receitas personalizadas com IA. O usuário informa os ingredientes e suas quantidades, responde a perguntas de contexto e recebe uma receita que pode salvar localmente para consultar depois.
 
 Este repositório é, intencionalmente, mais amplo do que um MVP estrito. Ele foi construído como um objeto de avaliação técnica: a maior superfície de integração permite demonstrar decisões de arquitetura, modularização, persistência, rede, navegação, testabilidade, build e desenvolvimento assistido por IA.
 
 > A complexidade aqui é uma escolha de contexto, não uma prescrição para todo produto pequeno. Em um MVP convencional, parte desta estrutura seria prematura; neste desafio, ela torna explícito como a base poderia evoluir com previsibilidade.
+
+## Demo
+
+<!-- TODO: adicionar vídeo de demo aqui (arraste o .mp4/.mov para este bloco no editor do GitHub, que gera o link automaticamente) -->
 
 ## O produto
 
@@ -75,6 +81,12 @@ Cada fronteira usa o modelo adequado à sua responsabilidade:
 
 Isso impede que detalhes de transporte ou persistência vazem para a apresentação.
 
+### Concorrência
+
+A camada de apresentação é isolada na main actor: ViewModels, coordinators (`CoordinatorProtocol`) e factories de UI são `@MainActor`, e trabalho assíncrono vive em `Task`s guardadas e canceladas quando o usuário abandona a tela — abandonar uma geração de receita cancela a request imediatamente. Os módulos folha (`NetworkInterfaces`, `DomainInterfaces`, `DataInterfaces`) já compilam com `StrictConcurrency` e `ExistentialAny`, com os modelos `Sendable`: a modularização permite migrar para Swift 6 um package por vez, das folhas para as camadas superiores.
+
+Erros são tipados por camada e mapeados exaustivamente na fronteira que os consome: `NetworkError` → erro de repository (incluindo `network` para falha de transporte e `cancelled`) → erro de use case → caso de feedback na apresentação, onde cada caso vira mensagem localizada específica — e cancelamento nunca é exibido como erro.
+
 ## Infraestrutura nativa, sem dependências externas de runtime
 
 O app privilegia APIs nativas para reduzir custo de manutenção e manter o comportamento sob controle:
@@ -102,7 +114,11 @@ O projeto gera dois targets a partir de `project.yml` e de arquivos `.xcconfig` 
 | `Abacaxi` | Production | Bundle principal, App Icon de produção e menu de debug desabilitado. |
 | `Abacaxi Stage` | Stage | Bundle com sufixo `.stage`, App Icon próprio, host de stage e menu de debug habilitado. |
 
+No Stage, um **shake** abre o menu de debug: ambiente ativo, base URL da API e limpeza dos dados locais (UserDefaults, imagens e banco de receitas). Em produção o gesto é inerte — a flag `ENABLE_DEBUG_MENU` flui do `.xcconfig` para o Info.plist e é o único ponto de decisão.
+
 Configurações compartilhadas ficam em `Configs/Base.xcconfig` e `Configs/App.xcconfig`; cada target combina esses valores com seu ambiente. Credenciais locais ficam em `Configs/Secrets.xcconfig`, que não é versionado, e o repositório disponibiliza `Configs/Secrets.example.xcconfig` como referência.
+
+A interface é **dark-branded por decisão**: a paleta do Design System é fixa escura e o app declara `overrideUserInterfaceStyle = .dark` na window, mantendo status bar, teclados e sheets do sistema consistentes em qualquer modo do dispositivo. A evolução natural seriam dynamic providers atrás dos mesmos tokens. Acessibilidade essencial é garantida pelos tokens: tipografia escala com Dynamic Type, elementos acionáveis expõem traits de VoiceOver e alvos de toque respeitam o mínimo de 44pt.
 
 ## Desenvolvimento orientado por especificação (SDD) e IA
 
@@ -121,6 +137,8 @@ O repositório continua sendo a fonte de verdade: especificações, contratos en
 As convenções estão organizadas em `.claude/CODE_RULES/` por domínio — testes, Swift, arquitetura, UIKit e validação. Essa é uma base de conhecimento contextual preparada para evoluir para um grafo de decisões técnicas: hoje ela já possui documentos especializados e roteamento por contexto; relações estruturadas e consultáveis entre decisões ainda seriam uma evolução futura.
 
 `AGENTS.md` na raiz define o contrato operacional comum. Arquivos `AGENTS.md` dentro do app-shell e dos módulos adicionam contexto local: responsabilidade, dependências permitidas, entradas públicas, regras de teste e limites arquiteturais. Em conjunto, `AGENTS.md` fornece orientação hierárquica e `CODE_RULES` concentra regras normativas reutilizáveis.
+
+Fluxos recorrentes são padronizados como **skills** em `.claude/skills/` — criar um use case de ponta a ponta, um endpoint, um módulo, uma tela (nas duas trilhas, UIKit e SwiftUI) ou um componente de Design System. Cada skill aponta para arquivos canônicos vivos do repositório como golden path em vez de duplicar templates, e termina no mesmo loop de validação do hook — convenção vira fluxo executável, não documentação que envelhece.
 
 `Scripts/on-write-code-check.sh` identifica o tipo do arquivo alterado e apresenta somente as regras relevantes. O mesmo fluxo combina:
 
@@ -149,10 +167,11 @@ make start
 O comando:
 
 1. instala XcodeGen e SwiftGen via Homebrew quando estiverem ausentes;
-2. valida a versão exigida do XcodeGen (`2.45.3`);
-3. gera os acessos tipados de `Localizable.strings` de todos os módulos;
-4. gera `Abacaxi.xcodeproj` a partir de `project.yml`;
-5. abre o projeto no Xcode.
+2. valida a versão exigida do XcodeGen (`2.45.3` ou mais nova);
+3. cria `Configs/Secrets.xcconfig` a partir do example quando ausente — **preencha `API_KEY` com sua chave**; sem ela o build do app falha com mensagem clara (a suíte de testes não depende da chave);
+4. gera os acessos tipados de `Localizable.strings` de todos os módulos;
+5. gera `Abacaxi.xcodeproj` a partir de `project.yml`;
+6. abre o projeto no Xcode.
 
 O `.xcodeproj` e os arquivos gerados pelo SwiftGen não são versionados. Rode `make start` novamente depois de clonar o repositório ou modificar `project.yml` e strings localizadas.
 
@@ -163,6 +182,7 @@ make generate-localizations # Regenera somente as strings tipadas
 make generate               # Regenera o projeto Xcode
 make lint                   # Executa o SwiftLint
 make lint-strict            # Executa o SwiftLint em modo estrito
+make test                   # Roda a suíte AllTests no simulador (TEST_DESTINATION configurável)
 ```
 
 Cada módulo é um package Swift local e pode ser construído isoladamente:
@@ -171,6 +191,26 @@ Cada módulo é um package Swift local e pode ser construído isoladamente:
 cd Modules/Recipe && swift build
 ```
 
+### Troubleshooting
+
+**TLS falha com `-1200`/`-9802` em rede corporativa**: proxies que interceptam TLS (ex.: McAfee Web Gateway) reassinam os certificados com uma CA que o Mac confia, mas o simulador não — o trust store do simulador é independente. Instale a CA do proxy no simulador bootado:
+
+```bash
+security find-certificate -a -c "<nome da CA do proxy>" -p /Library/Keychains/System.keychain > /tmp/proxy-ca.pem && xcrun simctl keychain booted add-root-cert /tmp/proxy-ca.pem
+```
+
+**`No booted iOS Simulator found` no hook de validação**: o script de verificação executa os testes num simulador bootado — abra um pelo Xcode/Simulator antes de editar código com o hook ativo.
+
+## Testes
+
+A suíte cobre os fluxos críticos do produto de ponta a ponta das camadas: geração de receita (validação de limites, mapeamento exaustivo de erros incluindo rate limit, offline e cancelamento), salvamento com round-trip completo de persistência (dados e imagem sobrevivem à serialização; falha de gravação nunca é silenciosa), ciclo de vida de coordinators (teste de desalocação do child) e o contrato HTTP verificado na "wire" com JSON real. A infraestrutura inclui test host com entitlements de Keychain (a camada Security é testada de verdade, não mockada), Core Data in-memory e cliente HTTP com cancelamento testado nos dois estilos de API.
+
+```bash
+make test
+```
+
+O scheme `AllTests` agrega os test targets de todos os módulos e coleta coverage; o CI executa lint estrito e a suíte completa a cada push — o badge no topo reflete o estado atual.
+
 ## Evoluções para escala
 
 As capacidades abaixo são próximos passos — não fazem parte da implementação atual:
@@ -178,9 +218,9 @@ As capacidades abaixo são próximos passos — não fazem parte da implementaç
 - observabilidade mobile com ferramentas como Datadog e Firebase Crashlytics;
 - feature flags e remote configuration para rollout gradual e experimentação;
 - analytics de produto para entender os funis de criação e salvamento de receitas;
-- acessibilidade, com Dynamic Type, VoiceOver, contraste e redução de movimento;
-- CI/CD para validação, testes, distribuição e controle de releases;
-- Fastlane para automação de assinatura, builds e distribuição.
+- acessibilidade além do essencial já coberto pelos tokens (Dynamic Type, VoiceOver e alvos mínimos): auditoria completa com Accessibility Inspector, contraste e redução de movimento;
+- distribuição contínua: o CI de validação (lint + suíte completa) já roda a cada push; faltam assinatura, builds de release e distribuição — com Fastlane como candidato natural;
+- migração completa para Swift 6 (os módulos folha já compilam com strict concurrency).
 
 Em um cenário de milhões de usuários, centenas de desenvolvedores e monorepo, a evolução natural do sistema de build seria o **Bazel**: builds herméticos, cache remoto, execução paralela e maior previsibilidade no tempo de feedback.
 

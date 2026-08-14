@@ -38,6 +38,50 @@ final class SavedRecipeRepositoryTests: XCTestCase {
         XCTAssertTrue(store.entities.isEmpty)
         XCTAssertEqual(imageStore.deletedNames, ["newest.png"])
     }
+
+    func test_save_thenFetch_roundTripsRecipeWithNutritionAndImage() throws {
+        let store = SavedRecipeStoreStub()
+        let sut = SavedRecipeRepository(persistentStore: store, imageStore: RecipeImageStoreStub())
+        let recipe = makeBusinessRecipe(
+            nutrition: .init(calories: 450, proteinGrams: 12, carbsGrams: 60, fatGrams: 10),
+            imageData: Data("imagem".utf8)
+        )
+
+        try sut.save(recipe: recipe)
+        let fetched = try sut.fetch(id: recipe.id.uuidString)
+
+        XCTAssertEqual(fetched, recipe)
+    }
+
+    func test_save_thenFetch_withoutNutritionAndImage_roundTripsRecipe() throws {
+        let store = SavedRecipeStoreStub()
+        let sut = SavedRecipeRepository(persistentStore: store, imageStore: RecipeImageStoreStub())
+        let recipe = makeBusinessRecipe(nutrition: nil, imageData: nil)
+
+        try sut.save(recipe: recipe)
+        let fetched = try sut.fetch(id: recipe.id.uuidString)
+
+        XCTAssertEqual(fetched, recipe)
+        XCTAssertNil(try XCTUnwrap(fetched).nutrition)
+        XCTAssertNil(try XCTUnwrap(fetched).imageData)
+    }
+
+    func test_fetch_whenStoredIDIsNotAValidUUID_throwsPersistenceError() {
+        let store = SavedRecipeStoreStub()
+        store.entities = [makeRecipe(id: "not-a-uuid", imagePath: nil, createdAt: .now)]
+        let sut = SavedRecipeRepository(persistentStore: store, imageStore: RecipeImageStoreStub())
+
+        XCTAssertThrowsError(try sut.fetch(id: "not-a-uuid")) { error in
+            XCTAssertEqual(error as? SavedRecipeRepositoryError, .persistenceFailed)
+        }
+    }
+
+    func test_fetch_whenRecipeDoesNotExist_returnsNil() throws {
+        let store = SavedRecipeStoreStub()
+        let sut = SavedRecipeRepository(persistentStore: store, imageStore: RecipeImageStoreStub())
+
+        XCTAssertNil(try sut.fetch(id: UUID().uuidString))
+    }
 }
 
 private extension SavedRecipeRepositoryTests {
@@ -65,6 +109,19 @@ private extension SavedRecipeRepositoryTests {
             nutritionData: nil,
             imagePath: imagePath,
             createdAt: createdAt
+        )
+    }
+
+    func makeBusinessRecipe(nutrition: RecipeNutritionBusinessModel?, imageData: Data?) -> RecipeBusinessModel {
+        RecipeBusinessModel(
+            title: "Receita",
+            description: "Descrição",
+            ingredients: [.init(name: "Arroz", quantity: "1 xícara"), .init(name: "Feijão", quantity: "2 conchas")],
+            steps: ["Refogue", "Cozinhe"],
+            preparationTimeMinutes: 20,
+            servings: 2,
+            nutrition: nutrition,
+            imageData: imageData
         )
     }
 }
@@ -95,13 +152,16 @@ private final class SavedRecipeStoreStub: PersistentStoringProtocol {
 
 private final class RecipeImageStoreStub: RecipeImageStoringProtocol {
     private(set) var deletedNames: [String] = []
+    private var storedImages: [String: Data] = [:]
 
     func save(_ data: Data, named name: String) throws -> String {
-        "\(name).png"
+        let path = "\(name).png"
+        storedImages[path] = data
+        return path
     }
 
     func load(named name: String) throws -> Data? {
-        nil
+        storedImages[name]
     }
 
     func delete(named name: String) throws {

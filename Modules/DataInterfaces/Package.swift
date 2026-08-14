@@ -11,7 +11,14 @@ let package = Package(
         .package(path: "../DomainInterfaces")
     ],
     targets: [
-        .target(name: "DataInterfaces", dependencies: ["DomainInterfaces"]),
+        .target(
+            name: "DataInterfaces",
+            dependencies: ["DomainInterfaces"],
+            swiftSettings: [
+                .enableExperimentalFeature("StrictConcurrency"),
+                .enableUpcomingFeature("ExistentialAny")
+            ]
+        ),
         .testTarget(name: "DataInterfacesTests", dependencies: ["DataInterfaces"])
     ]
 )

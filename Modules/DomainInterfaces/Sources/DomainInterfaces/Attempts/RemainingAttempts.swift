@@ -1,4 +1,4 @@
-public struct RemainingAttempts: Equatable {
+public struct RemainingAttempts: Equatable, Sendable {
     public let remaining: Int
     public let limit: Int
     public let windowSeconds: Int

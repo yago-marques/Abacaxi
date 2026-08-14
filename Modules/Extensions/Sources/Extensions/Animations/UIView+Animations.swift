@@ -94,7 +94,7 @@ public extension UIView {
 
     func transition(
         _ transition: UIViewTransition = .crossDissolve,
-        animations: @escaping () -> Void,
+        animations: @escaping @MainActor () -> Void,
         completion: ((Bool) -> Void)? = nil
     ) {
         UIView.transition(

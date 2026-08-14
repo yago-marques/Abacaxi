@@ -18,29 +18,34 @@ public final class KeychainStore: SecureStoringProtocol {
     }
 
     public func save(_ data: Data, forKey key: String) throws {
-        try? delete(forKey: key)
-
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: key,
-            kSecValueData as String: data
+        // The stored value gates the product rate limit, so it must stay on this
+        // device only (no backup/keychain migration) and be readable after the
+        // first unlock for background work.
+        let attributes: [String: Any] = [
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         ]
 
-        let status = SecItemAdd(query as CFDictionary, nil)
-        guard status == errSecSuccess else {
-            throw KeychainError.unhandledStatus(status)
+        let addQuery = baseQuery(forKey: key).merging(attributes) { _, new in new }
+        let addStatus = SecItemAdd(addQuery as CFDictionary, nil)
+        if addStatus == errSecSuccess { return }
+        guard addStatus == errSecDuplicateItem else {
+            throw KeychainError.unhandledStatus(addStatus)
+        }
+
+        let updateStatus = SecItemUpdate(
+            baseQuery(forKey: key) as CFDictionary,
+            attributes as CFDictionary
+        )
+        guard updateStatus == errSecSuccess else {
+            throw KeychainError.unhandledStatus(updateStatus)
         }
     }
 
     public func read(forKey key: String) throws -> Data? {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: key,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne
-        ]
+        var query = baseQuery(forKey: key)
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
 
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
@@ -55,15 +60,17 @@ public final class KeychainStore: SecureStoringProtocol {
     }
 
     public func delete(forKey key: String) throws {
-        let query: [String: Any] = [
+        let status = SecItemDelete(baseQuery(forKey: key) as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else {
+            throw KeychainError.unhandledStatus(status)
+        }
+    }
+
+    private func baseQuery(forKey key: String) -> [String: Any] {
+        [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: key
         ]
-
-        let status = SecItemDelete(query as CFDictionary)
-        guard status == errSecSuccess || status == errSecItemNotFound else {
-            throw KeychainError.unhandledStatus(status)
-        }
     }
 }

@@ -126,6 +126,20 @@ final class URLSessionHTTPClientTests: XCTestCase {
         }
     }
 
+    func test_send_transportFailure_mapsToTransportError() async throws {
+        let sut = try makeSUT()
+        MockURLProtocol.handler = { _ in .init(error: URLError(.notConnectedToInternet)) }
+
+        do {
+            let _: Account = try await sut.send(TestEndpoint(path: "/accounts/1"))
+            XCTFail("expected NetworkError.transport")
+        } catch let NetworkError.transport(error) {
+            XCTAssertEqual((error as? URLError)?.code, .notConnectedToInternet)
+        } catch {
+            XCTFail("expected NetworkError.transport, got \(error)")
+        }
+    }
+
     func test_send_malformedJSON_mapsToDecodingError() async throws {
         let sut = try makeSUT()
         MockURLProtocol.handler = { _ in .init(statusCode: 200, data: Data("not json".utf8)) }

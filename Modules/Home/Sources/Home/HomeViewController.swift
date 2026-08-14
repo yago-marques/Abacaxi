@@ -5,6 +5,11 @@ import UIKit
 
 final class HomeViewController: UIViewController {
     private let viewModel: HomeViewModelProtocol
+    private var loadTask: Task<Void, Never>?
+
+    deinit {
+        loadTask?.cancel()
+    }
 
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
@@ -58,6 +63,9 @@ final class HomeViewController: UIViewController {
         )
         card.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(didTapRecipeCreation)))
         card.isUserInteractionEnabled = true
+        card.isAccessibilityElement = true
+        card.accessibilityTraits = .button
+        card.accessibilityLabel = "\(state.recipeCreationCardTitle). \(state.recipeCreationCardSubtitle)"
         return card
     }()
 
@@ -72,6 +80,9 @@ final class HomeViewController: UIViewController {
         )
         card.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(didTapSavedRecipes)))
         card.isUserInteractionEnabled = true
+        card.isAccessibilityElement = true
+        card.accessibilityTraits = .button
+        card.accessibilityLabel = "\(state.savedRecipesCardTitle). \(state.savedRecipesCardSubtitle)"
         card.isHidden = true
         return card
     }()
@@ -109,7 +120,6 @@ final class HomeViewController: UIViewController {
         navigationController?.setNavigationBarHidden(true, animated: animated)
         loadAttempts()
     }
-
 }
 
 extension HomeViewController: ViewCoding {
@@ -150,7 +160,7 @@ extension HomeViewController: ViewCoding {
 
     private func loadAttempts() {
         showAttemptsPlaceholderIfNeeded()
-        Task { [weak self, viewModel] in
+        loadTask = Task { [weak self, viewModel] in
             await viewModel.load()
             self?.renderAttempts()
         }

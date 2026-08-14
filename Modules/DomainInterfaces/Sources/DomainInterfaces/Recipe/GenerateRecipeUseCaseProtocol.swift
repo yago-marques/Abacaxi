@@ -12,4 +12,6 @@ public enum GenerateRecipeError: Error, Equatable {
     case rateLimited
     case temporarilyUnavailable
     case invalidResponse
+    case noConnection
+    case cancelled
 }

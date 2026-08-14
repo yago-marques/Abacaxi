@@ -1,10 +1,12 @@
 import GeneralInterfaces
 import DomainInterfaces
 
+@MainActor
 public protocol LauncherViewModelProtocol {
     func checkDeviceID()
 }
 
+@MainActor
 public final class LauncherViewModel: LauncherViewModelProtocol {
     private let getDeviceIDUseCase: GetDeviceIDUseCaseProtocol
     private let createDeviceIDUseCase: CreateDeviceIDUseCaseProtocol

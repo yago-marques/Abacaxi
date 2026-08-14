@@ -1,6 +1,7 @@
 import XCTest
 @testable import Home
 
+@MainActor
 final class OnboardingViewModelTests: XCTestCase {
     func test_start_whenOnboardingIsNotCompleted_opensOnboarding() {
         let (sut, doubles) = makeSUTAndDoubles()
@@ -31,6 +32,7 @@ final class OnboardingViewModelTests: XCTestCase {
 
 private extension OnboardingViewModelTests {
     private typealias SUT = OnboardingViewModel
+    // swiftlint:disable:next large_tuple
     private typealias Doubles = (
         shouldShowOnboardingUseCase: ShouldShowOnboardingUseCaseStub,
         completeOnboardingUseCase: CompleteOnboardingUseCaseSpy,

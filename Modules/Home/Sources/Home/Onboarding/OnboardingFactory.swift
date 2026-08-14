@@ -3,6 +3,7 @@ import DomainInterfaces
 import UIKit
 
 enum OnboardingFactory {
+    @MainActor
     static func makeViewController(
         useCaseContainer: UseCaseContainer,
         coordinator: CoordinatorProtocol

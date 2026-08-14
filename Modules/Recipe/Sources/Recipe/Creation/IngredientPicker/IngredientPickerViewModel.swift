@@ -8,6 +8,7 @@ struct IngredientPickerFeedback: Identifiable {
         case invalidIngredients
         case rateLimited
         case temporarilyUnavailable
+        case noConnection
         case requestFailed
     }
 
@@ -22,12 +23,8 @@ enum IngredientPickerQuestionsState: Equatable {
     case empty
 }
 
+@MainActor
 final class IngredientPickerViewModel: ObservableObject {
-    private enum Constants {
-        static let minimumIngredients = 2
-        static let maximumIngredients = 15
-    }
-
     @Published var draftText = ""
     @Published private(set) var ingredients: [IngredientPresentationModel] = []
     @Published var ingredientBeingEdited: IngredientPresentationModel?
@@ -41,12 +38,12 @@ final class IngredientPickerViewModel: ObservableObject {
     }
 
     var canContinue: Bool {
-        (Constants.minimumIngredients...Constants.maximumIngredients).contains(ingredients.count)
+        IngredientLimits.range.contains(ingredients.count)
     }
 
     func addIngredient() {
         let draft = IngredientPresentationModel(name: draftText)
-        guard !draft.name.isEmpty, ingredients.count < Constants.maximumIngredients else { return }
+        guard !draft.name.isEmpty, ingredients.count < IngredientLimits.maximum else { return }
 
         guard !ingredients.contains(where: { $0.normalizedName == draft.normalizedName }) else {
             feedback = IngredientPickerFeedback(kind: .duplicate)
@@ -80,37 +77,29 @@ final class IngredientPickerViewModel: ObservableObject {
     }
 
     func fetchQuestions() async -> [RecipeQuestionPresentationModel]? {
-        let ingredients = await MainActor.run { [weak self] () -> [RecipeIngredientBusinessModel]? in
-            guard let self,
-                  self.canContinue,
-                  self.questionsState != .loading else {
-                return nil
-            }
+        guard canContinue, questionsState != .loading else { return nil }
 
-            self.questionsState = .loading
-            return self.ingredients.map { $0.toBusinessModel() }
-        }
-        guard let ingredients else { return nil }
+        questionsState = .loading
+        let businessModels = ingredients.map { $0.toBusinessModel() }
 
         do {
-            let questions = try await getRecipeQuestionsUseCase.execute(ingredients: ingredients)
-            await MainActor.run { [weak self] in
-                self?.questionsState = questions.isEmpty
-                    ? .empty
-                    : .questions(questions.map(RecipeQuestionPresentationModel.init))
-            }
-            return questions.map(RecipeQuestionPresentationModel.init)
+            let questions = try await getRecipeQuestionsUseCase.execute(ingredients: businessModels)
+            let presentationModels = questions.map(RecipeQuestionPresentationModel.init)
+            questionsState = presentationModels.isEmpty ? .empty : .questions(presentationModels)
+            return presentationModels
+        } catch GetRecipeQuestionsError.cancelled {
+            questionsState = .idle
+            return nil
+        } catch is CancellationError {
+            questionsState = .idle
+            return nil
         } catch let error as GetRecipeQuestionsError {
-            await MainActor.run { [weak self] in
-                self?.questionsState = .idle
-                self?.feedback = IngredientPickerFeedback(kind: Self.feedbackKind(for: error))
-            }
+            questionsState = .idle
+            feedback = IngredientPickerFeedback(kind: Self.feedbackKind(for: error))
             return nil
         } catch {
-            await MainActor.run { [weak self] in
-                self?.questionsState = .idle
-                self?.feedback = IngredientPickerFeedback(kind: .requestFailed)
-            }
+            questionsState = .idle
+            feedback = IngredientPickerFeedback(kind: .requestFailed)
             return nil
         }
     }
@@ -120,7 +109,8 @@ final class IngredientPickerViewModel: ObservableObject {
         case .invalidIngredientCount, .invalidIngredients: .invalidIngredients
         case .rateLimited: .rateLimited
         case .temporarilyUnavailable: .temporarilyUnavailable
-        case .missingDeviceID, .invalidResponse: .requestFailed
+        case .noConnection: .noConnection
+        case .missingDeviceID, .invalidResponse, .cancelled: .requestFailed
         }
     }
 }

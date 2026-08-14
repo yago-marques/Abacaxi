@@ -35,11 +35,13 @@ final class RecipeQuestionsRepositoryTests: XCTestCase {
 
     func test_fetchQuestions_mapsDomainErrorCode() async {
         let (sut, doubles) = makeSUTAndDoubles()
-        doubles.stubbedError = NetworkError.statusCode(422, data: """
+        doubles.stubbedError = NetworkError.statusCode(422, data: Data("""
         { "detail": { "error": { "code": "INVALID_INGREDIENTS", "message": "ignored" } } }
-        """.data(using: .utf8))
+        """.utf8))
 
-        await XCTAssertThrowsErrorAsync(try await sut.fetchQuestions(deviceID: UUID(), ingredients: ingredients)) { error in
+        await XCTAssertThrowsErrorAsync(
+            try await sut.fetchQuestions(deviceID: UUID(), ingredients: ingredients)
+        ) { error in
             XCTAssertEqual(error as? RecipeQuestionsRepositoryError, .invalidIngredients)
         }
     }
@@ -48,8 +50,45 @@ final class RecipeQuestionsRepositoryTests: XCTestCase {
         let (sut, doubles) = makeSUTAndDoubles()
         doubles.stubbedError = NetworkError.statusCode(422, data: Data("[]".utf8))
 
-        await XCTAssertThrowsErrorAsync(try await sut.fetchQuestions(deviceID: UUID(), ingredients: ingredients)) { error in
+        await XCTAssertThrowsErrorAsync(
+            try await sut.fetchQuestions(deviceID: UUID(), ingredients: ingredients)
+        ) { error in
             XCTAssertEqual(error as? RecipeQuestionsRepositoryError, .invalidResponse)
+        }
+    }
+
+    func test_fetchQuestions_mapsRateLimitedErrorCode() async {
+        let (sut, doubles) = makeSUTAndDoubles()
+        doubles.stubbedError = NetworkError.statusCode(429, data: Data("""
+        { "detail": { "error": { "code": "RATE_LIMITED", "message": "ignored" } } }
+        """.utf8))
+
+        await XCTAssertThrowsErrorAsync(
+            try await sut.fetchQuestions(deviceID: UUID(), ingredients: ingredients)
+        ) { error in
+            XCTAssertEqual(error as? RecipeQuestionsRepositoryError, .rateLimited)
+        }
+    }
+
+    func test_fetchQuestions_mapsTransportFailureToNetworkError() async {
+        let (sut, doubles) = makeSUTAndDoubles()
+        doubles.stubbedError = NetworkError.transport(URLError(.notConnectedToInternet))
+
+        await XCTAssertThrowsErrorAsync(
+            try await sut.fetchQuestions(deviceID: UUID(), ingredients: ingredients)
+        ) { error in
+            XCTAssertEqual(error as? RecipeQuestionsRepositoryError, .network)
+        }
+    }
+
+    func test_fetchQuestions_mapsCancellationToCancelledError() async {
+        let (sut, doubles) = makeSUTAndDoubles()
+        doubles.stubbedError = NetworkError.cancelled
+
+        await XCTAssertThrowsErrorAsync(
+            try await sut.fetchQuestions(deviceID: UUID(), ingredients: ingredients)
+        ) { error in
+            XCTAssertEqual(error as? RecipeQuestionsRepositoryError, .cancelled)
         }
     }
 }
@@ -65,9 +104,9 @@ private extension RecipeQuestionsRepositoryTests {
 
     func makeSUTAndDoubles() -> (sut: RecipeQuestionsRepository, doubles: HTTPClientStub) {
         let httpClient = HTTPClientStub()
-        httpClient.stubbedData = """
+        httpClient.stubbedData = Data("""
         { "questions": [{ "id": "q1", "text": "Pergunta", "options": ["A", "B"], "allow_custom": true }] }
-        """.data(using: .utf8)
+        """.utf8)
         return (RecipeQuestionsRepository(httpClient: httpClient, apiKey: "api-key"), httpClient)
     }
 }

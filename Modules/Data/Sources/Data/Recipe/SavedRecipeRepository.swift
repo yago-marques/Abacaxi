@@ -12,7 +12,8 @@ public enum SavedRecipeRepositoryFactory {
     }
 }
 
-public final class SavedRecipeRepository<Store: PersistentStoringProtocol>: SavedRecipeRepositoryProtocol where Store.Entity == SavedRecipePersistentModel {
+public final class SavedRecipeRepository<Store: PersistentStoringProtocol>: SavedRecipeRepositoryProtocol
+where Store.Entity == SavedRecipePersistentModel {
     private let persistentStore: Store
     private let imageStore: RecipeImageStoringProtocol
 
@@ -87,7 +88,7 @@ private extension SavedRecipePersistentModel {
         preparationTimeMinutes = recipe.preparationTimeMinutes
         servings = recipe.servings
         nutritionData = try recipe.nutrition.map(JSONEncoder().encode)
-        imagePath = recipe.imageData.flatMap { try? imageStore.save($0, named: recipe.id.uuidString) }
+        imagePath = try recipe.imageData.map { try imageStore.save($0, named: recipe.id.uuidString) }
         createdAt = Date()
     }
 }

@@ -33,7 +33,11 @@ public final class HasSavedRecipesUseCase: HasSavedRecipesUseCaseProtocol {
     }
 
     public func execute() throws -> Bool {
-        do { return try !savedRecipeRepository.fetchAll().isEmpty } catch { throw GetSavedRecipesError.persistenceFailed }
+        do {
+            return try !savedRecipeRepository.fetchAll().isEmpty
+        } catch {
+            throw GetSavedRecipesError.persistenceFailed
+        }
     }
 }
 

@@ -59,9 +59,9 @@ private extension AttemptsRepositoryTests {
 
     func makeSUTAndDoubles() -> (sut: SUT, doubles: Doubles) {
         let httpClient = HTTPClientStub()
-        httpClient.stubbedData = """
+        httpClient.stubbedData = Data("""
         { "remaining": 17, "limit": 20, "window_seconds": 3600 }
-        """.data(using: .utf8)
+        """.utf8)
         let sut = AttemptsRepository(httpClient: httpClient, apiKey: "api-key")
         return (sut, httpClient)
     }

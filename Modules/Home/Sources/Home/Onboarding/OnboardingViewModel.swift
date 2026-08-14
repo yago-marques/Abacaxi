@@ -1,11 +1,13 @@
 import GeneralInterfaces
 import DomainInterfaces
 
+@MainActor
 protocol OnboardingViewModelProtocol {
     func start()
     func didTapStart()
 }
 
+@MainActor
 final class OnboardingViewModel: OnboardingViewModelProtocol {
     private let shouldShowOnboardingUseCase: ShouldShowOnboardingUseCaseProtocol
     private let completeOnboardingUseCase: CompleteOnboardingUseCaseProtocol

@@ -21,12 +21,20 @@ public final class AttemptsRepository: AttemptsRepositoryProtocol {
     }
 
     public func fetchAttempts(deviceID: UUID) async throws -> AttemptsResponse {
-        let response: Response = try await httpClient.send(Endpoint(deviceID: deviceID, apiKey: apiKey))
-        return AttemptsResponse(
-            remaining: response.remaining,
-            limit: response.limit,
-            windowSeconds: response.windowSeconds
-        )
+        do {
+            let response: Response = try await httpClient.send(Endpoint(deviceID: deviceID, apiKey: apiKey))
+            return AttemptsResponse(
+                remaining: response.remaining,
+                limit: response.limit,
+                windowSeconds: response.windowSeconds
+            )
+        } catch let error as NetworkError {
+            throw switch error {
+            case .transport: AttemptsRepositoryError.network
+            case .cancelled: AttemptsRepositoryError.cancelled
+            case .statusCode, .invalidURL, .invalidResponse, .decoding: AttemptsRepositoryError.invalidResponse
+            }
+        }
     }
 }
 
@@ -45,16 +53,16 @@ private extension AttemptsRepository {
             ]
         }
     }
+}
 
-    struct Response: Decodable {
-        let remaining: Int
-        let limit: Int
-        let windowSeconds: Int
+private struct Response: Decodable {
+    let remaining: Int
+    let limit: Int
+    let windowSeconds: Int
 
-        enum CodingKeys: String, CodingKey {
-            case remaining
-            case limit
-            case windowSeconds = "window_seconds"
-        }
+    enum CodingKeys: String, CodingKey {
+        case remaining
+        case limit
+        case windowSeconds = "window_seconds"
     }
 }

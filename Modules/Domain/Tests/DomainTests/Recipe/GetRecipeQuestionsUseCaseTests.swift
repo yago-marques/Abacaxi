@@ -31,7 +31,9 @@ final class GetRecipeQuestionsUseCaseTests: XCTestCase {
     func test_execute_withInvalidIngredientCount_throwsWithoutRequest() async {
         let (sut, doubles) = makeSUTAndDoubles()
 
-        await XCTAssertThrowsErrorAsync(try await sut.execute(ingredients: [.init(name: "Arroz", amount: .medium)])) { error in
+        await XCTAssertThrowsErrorAsync(
+            try await sut.execute(ingredients: [.init(name: "Arroz", amount: .medium)])
+        ) { error in
             XCTAssertEqual(error as? GetRecipeQuestionsError, .invalidIngredientCount)
         }
 

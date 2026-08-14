@@ -2,6 +2,7 @@ import DomainInterfaces
 import XCTest
 @testable import Home
 
+@MainActor
 final class HomeViewModelTests: XCTestCase {
     func test_state_startsWithLoadingAttemptsAndHomeContent() {
         let (sut, _) = makeSUTAndDoubles()

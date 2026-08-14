@@ -8,7 +8,13 @@ let package = Package(
         .library(name: "NetworkInterfaces", targets: ["NetworkInterfaces"])
     ],
     targets: [
-        .target(name: "NetworkInterfaces"),
+        .target(
+            name: "NetworkInterfaces",
+            swiftSettings: [
+                .enableExperimentalFeature("StrictConcurrency"),
+                .enableUpcomingFeature("ExistentialAny")
+            ]
+        ),
         .testTarget(name: "NetworkInterfacesTests", dependencies: ["NetworkInterfaces"])
     ]
 )

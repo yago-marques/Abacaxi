@@ -20,7 +20,7 @@ public final class DSButton: UIButton {
         nil
     }
 
-    public override var isHighlighted: Bool {
+    override public var isHighlighted: Bool {
         didSet {
             alpha = isHighlighted ? 0.72 : 1
         }

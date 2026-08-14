@@ -17,6 +17,7 @@ enum HomeModule {
         }
     }
 
+    @MainActor
     @discardableResult
     static func start(
         navigationController: UINavigationController,

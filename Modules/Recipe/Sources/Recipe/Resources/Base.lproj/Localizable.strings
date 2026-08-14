@@ -9,6 +9,7 @@
 "ingredientPicker.rateLimitedToast" = "Suas tentativas acabaram. Tente novamente mais tarde.";
 "ingredientPicker.temporarilyUnavailableToast" = "Não foi possível gerar perguntas agora. Tente novamente.";
 "ingredientPicker.requestFailedToast" = "Não foi possível buscar as perguntas. Tente novamente.";
+"ingredientPicker.noConnectionToast" = "Sem conexão com a internet. Verifique sua rede e tente novamente.";
 "ingredientPicker.minimumIngredients" = "Adicione pelo menos 2 ingredientes para continuar.";
 "ingredientPicker.quantity" = "Quantidade";
 "ingredientPicker.confirm" = "Confirmar";
@@ -21,6 +22,10 @@
 "questionStepper.other" = "Outro";
 "questionStepper.other.placeholder" = "Digite sua resposta";
 "questionStepper.completedToast" = "Respostas prontas para gerar sua receita!";
+"recipeFlow.invalidIngredientsToast" = "Revise os ingredientes informados.";
+"recipeFlow.rateLimitedToast" = "Suas tentativas acabaram. Tente novamente mais tarde.";
+"recipeFlow.temporarilyUnavailableToast" = "Não foi possível gerar sua receita agora. Tente novamente.";
+"recipeFlow.noConnectionToast" = "Sem conexão com a internet. Verifique sua rede e tente novamente.";
 "recipeResult.loading.analyzing" = "A IA está analisando suas escolhas...";
 "recipeResult.loading.combining" = "Combinando sabores para a sua receita...";
 "recipeResult.loading.finishing" = "Finalizando os últimos detalhes...";

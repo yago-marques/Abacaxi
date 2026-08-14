@@ -6,11 +6,10 @@ struct RecipeFlowView: View {
     @StateObject private var viewModel: RecipeFlowViewModel
 
     private let getRecipeQuestionsUseCase: GetRecipeQuestionsUseCaseProtocol
-    private let generateRecipeUseCase: GenerateRecipeUseCaseProtocol
     private let saveRecipeUseCase: SaveRecipeUseCaseProtocol
     private let getSavedRecipesUseCase: GetSavedRecipesUseCaseProtocol
-    private let getSavedRecipeUseCase: GetSavedRecipeUseCaseProtocol
     private let removeSavedRecipeUseCase: RemoveSavedRecipeUseCaseProtocol
+    private let onDismiss: () -> Void
     @State private var toastRequest: DSToastRequest?
 
     init(
@@ -21,16 +20,21 @@ struct RecipeFlowView: View {
         getSavedRecipesUseCase: GetSavedRecipesUseCaseProtocol,
         getSavedRecipeUseCase: GetSavedRecipeUseCaseProtocol,
         removeSavedRecipeUseCase: RemoveSavedRecipeUseCaseProtocol,
-        onFinish: @escaping () -> Void
+        onFinish: @escaping () -> Void,
+        onDismiss: @escaping () -> Void = {}
     ) {
         self.getRecipeQuestionsUseCase = getRecipeQuestionsUseCase
-        self.generateRecipeUseCase = generateRecipeUseCase
         self.saveRecipeUseCase = saveRecipeUseCase
         self.getSavedRecipesUseCase = getSavedRecipesUseCase
-        self.getSavedRecipeUseCase = getSavedRecipeUseCase
         self.removeSavedRecipeUseCase = removeSavedRecipeUseCase
+        self.onDismiss = onDismiss
         _viewModel = StateObject(
-            wrappedValue: RecipeFlowViewModel(entryPoint: entryPoint, onFinish: onFinish)
+            wrappedValue: RecipeFlowViewModel(
+                entryPoint: entryPoint,
+                generateRecipeUseCase: generateRecipeUseCase,
+                getSavedRecipeUseCase: getSavedRecipeUseCase,
+                onFinish: onFinish
+            )
         )
     }
 
@@ -45,22 +49,21 @@ struct RecipeFlowView: View {
                         QuestionStepperView(
                             viewModel: QuestionStepperViewModel(
                                 questions: viewModel.questions,
-                                onBack: viewModel.goBack,
-                                onComplete: generateRecipe
+                                onBack: { viewModel.goBack() },
+                                onComplete: { viewModel.generateRecipe(answers: $0) }
                             )
                         )
                     case .result:
                         if let recipe = viewModel.recipe, let resultContext = viewModel.resultContext {
+                            let showsGoHome = resultContext == .generated && viewModel.entryPoint == .creation
                             RecipeResultView(
                                 recipe: recipe,
                                 context: resultContext,
                                 saveRecipeUseCase: saveRecipeUseCase,
                                 removeSavedRecipeUseCase: removeSavedRecipeUseCase,
-                                onGoHome: resultContext == .generated && viewModel.entryPoint == .creation
-                                    ? viewModel.finishFlow
-                                    : nil,
-                                onBack: viewModel.goBack,
-                                onRecipeRemoved: viewModel.goBack
+                                onGoHome: showsGoHome ? { viewModel.finishFlow() } : nil,
+                                onBack: { viewModel.goBack() },
+                                onRecipeRemoved: { viewModel.goBack() }
                             )
                         }
                     }
@@ -72,6 +75,14 @@ struct RecipeFlowView: View {
             }
         }
         .dsToast(request: toastRequest, onDismiss: { _ in toastRequest = nil })
+        .onChange(of: viewModel.feedback?.id) { _ in
+            guard let feedback = viewModel.feedback else { return }
+            toastRequest = DSToastRequest(message: Self.toastMessage(for: feedback), style: .error)
+        }
+        .onDisappear {
+            viewModel.cancelGeneration()
+            onDismiss()
+        }
     }
 
     @ViewBuilder private var rootView: some View {
@@ -81,9 +92,9 @@ struct RecipeFlowView: View {
         case .myRecipes:
             SavedRecipesView(
                 viewModel: SavedRecipesViewModel(getSavedRecipesUseCase: getSavedRecipesUseCase),
-                onBack: viewModel.goBack,
-                onCreateRecipe: viewModel.openCreation,
-                onSelectRecipe: openSavedRecipe
+                onBack: { viewModel.goBack() },
+                onCreateRecipe: { viewModel.openCreation() },
+                onSelectRecipe: { viewModel.openSavedRecipe(id: $0) }
             )
         }
     }
@@ -91,43 +102,19 @@ struct RecipeFlowView: View {
     private var ingredientPicker: IngredientPickerView {
         IngredientPickerView(
             viewModel: IngredientPickerViewModel(getRecipeQuestionsUseCase: getRecipeQuestionsUseCase),
-            onBack: viewModel.goBack,
-            onQuestionsLoaded: openQuestions
+            onBack: { viewModel.goBack() },
+            onQuestionsLoaded: { viewModel.openQuestions(ingredients: $0, questions: $1) }
         )
     }
 
-    private func openQuestions(
-        ingredients: [RecipeIngredientBusinessModel],
-        questions: [RecipeQuestionPresentationModel]
-    ) {
-        viewModel.openQuestions(ingredients: ingredients, questions: questions)
-        if questions.isEmpty { generateRecipe([]) }
-    }
-
-    private func generateRecipe(_ answers: [RecipeAnswerBusinessModel]) {
-        viewModel.startGeneration()
-        Task {
-            do {
-                let recipe = try await generateRecipeUseCase.execute(
-                    ingredients: viewModel.ingredients,
-                    answers: answers
-                )
-                await MainActor.run { viewModel.showGeneratedRecipe(recipe) }
-            } catch {
-                await MainActor.run {
-                    viewModel.finishGeneration()
-                    toastRequest = DSToastRequest(message: L10n.RecipeResult.generationError, style: .error)
-                }
-            }
-        }
-    }
-
-    private func openSavedRecipe(id: String) {
-        do {
-            guard let recipe = try getSavedRecipeUseCase.execute(id: id) else { return }
-            viewModel.showSavedRecipe(recipe, id: id)
-        } catch {
-            toastRequest = DSToastRequest(message: L10n.MyRecipes.loadError, style: .error)
+    private static func toastMessage(for feedback: RecipeFlowFeedback) -> String {
+        switch feedback.kind {
+        case .invalidIngredients: L10n.RecipeFlow.invalidIngredientsToast
+        case .rateLimited: L10n.RecipeFlow.rateLimitedToast
+        case .temporarilyUnavailable: L10n.RecipeFlow.temporarilyUnavailableToast
+        case .noConnection: L10n.RecipeFlow.noConnectionToast
+        case .generationFailed: L10n.RecipeResult.generationError
+        case .savedRecipeUnavailable: L10n.MyRecipes.loadError
         }
     }
 }

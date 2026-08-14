@@ -45,6 +45,12 @@ private extension KeychainStoreTests {
     }
 
     func uniqueKey() -> String {
-        UUID().uuidString
+        let key = UUID().uuidString
+        addTeardownBlock {
+            // Best-effort cleanup so test keys don't accumulate in the real
+            // Keychain between runs; failures here must not fail the test.
+            try? KeychainStore().delete(forKey: key)
+        }
+        return key
     }
 }

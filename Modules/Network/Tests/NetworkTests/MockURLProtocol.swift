@@ -5,16 +5,41 @@ final class MockURLProtocol: URLProtocol {
         let statusCode: Int
         let data: Data?
         let delay: TimeInterval
+        let error: Error?
 
-        init(statusCode: Int = 200, data: Data? = nil, delay: TimeInterval = 0) {
+        init(statusCode: Int = 200, data: Data? = nil, delay: TimeInterval = 0, error: Error? = nil) {
             self.statusCode = statusCode
             self.data = data
             self.delay = delay
+            self.error = error
         }
     }
 
-    static var handler: ((URLRequest) -> Stub)?
-    static var lastRequest: URLRequest?
+    static var handler: ((URLRequest) -> Stub)? {
+        get {
+            staticLock.lock()
+            defer { staticLock.unlock() }
+            return _handler
+        }
+        set {
+            staticLock.lock()
+            defer { staticLock.unlock() }
+            _handler = newValue
+        }
+    }
+
+    static var lastRequest: URLRequest? {
+        get {
+            staticLock.lock()
+            defer { staticLock.unlock() }
+            return _lastRequest
+        }
+        set {
+            staticLock.lock()
+            defer { staticLock.unlock() }
+            _lastRequest = newValue
+        }
+    }
 
     static func makeSession() -> URLSession {
         let configuration = URLSessionConfiguration.ephemeral
@@ -22,11 +47,15 @@ final class MockURLProtocol: URLProtocol {
         return URLSession(configuration: configuration)
     }
 
+    private static let staticLock = NSLock()
+    private static var _handler: ((URLRequest) -> Stub)?
+    private static var _lastRequest: URLRequest?
+
     private let lock = NSLock()
     private var isCancelled = false
 
-    override class func canInit(with request: URLRequest) -> Bool { true }
-    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override static func canInit(with request: URLRequest) -> Bool { true }
+    override static func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
     override func startLoading() {
         MockURLProtocol.lastRequest = request
@@ -45,6 +74,11 @@ final class MockURLProtocol: URLProtocol {
             let cancelled = self.isCancelled
             self.lock.unlock()
             guard !cancelled else { return }
+
+            if let error = stub.error {
+                self.client?.urlProtocol(self, didFailWithError: error)
+                return
+            }
 
             guard let url = self.request.url,
                   let response = HTTPURLResponse(

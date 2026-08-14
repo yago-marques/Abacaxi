@@ -6,6 +6,8 @@ public enum RecipeQuestionsRepositoryError: Error, Equatable {
     case rateLimited
     case temporarilyUnavailable
     case invalidResponse
+    case network
+    case cancelled
 }
 
 public protocol RecipeQuestionsRepositoryProtocol {

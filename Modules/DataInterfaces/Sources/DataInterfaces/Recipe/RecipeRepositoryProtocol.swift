@@ -14,4 +14,6 @@ public enum RecipeRepositoryError: Error, Equatable {
     case rateLimited
     case temporarilyUnavailable
     case invalidResponse
+    case network
+    case cancelled
 }

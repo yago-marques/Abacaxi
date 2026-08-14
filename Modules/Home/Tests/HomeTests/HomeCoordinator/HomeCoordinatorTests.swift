@@ -3,6 +3,7 @@ import GeneralInterfaces
 import XCTest
 @testable import Home
 
+@MainActor
 final class HomeCoordinatorTests: XCTestCase {
     private struct OtherAction: CoordinatorActionProtocol {}
 
@@ -51,10 +52,24 @@ final class HomeCoordinatorTests: XCTestCase {
 
         XCTAssertTrue(doubles.externalRouter.openSavedRecipesCalled)
     }
+
+    func test_handle_whenChildFlowFinishes_releasesTheChildCoordinator() {
+        let (sut, doubles) = makeSUTAndDoubles()
+        weak var childCoordinator = doubles.externalRouter.stubbedCoordinator
+
+        sut.handle(HomeAction.openRecipeCreation)
+        doubles.externalRouter.stubbedCoordinator = nil
+        XCTAssertNotNil(childCoordinator)
+
+        doubles.externalRouter.lastOnFinish?()
+
+        XCTAssertNil(childCoordinator)
+    }
 }
 
 private extension HomeCoordinatorTests {
     private typealias SUT = HomeCoordinator
+    // swiftlint:disable:next large_tuple
     private typealias Doubles = (
         navigationController: UINavigationController,
         shouldShowOnboardingUseCase: ShouldShowOnboardingUseCaseStub,

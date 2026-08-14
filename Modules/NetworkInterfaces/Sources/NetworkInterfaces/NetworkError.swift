@@ -2,9 +2,9 @@ import Foundation
 
 public enum NetworkError: Error {
     case invalidURL
-    case transport(Error)
+    case transport(any Error)
     case invalidResponse
     case statusCode(Int, data: Data?)
-    case decoding(Error)
+    case decoding(any Error)
     case cancelled
 }

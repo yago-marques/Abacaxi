@@ -8,7 +8,13 @@ let package = Package(
         .library(name: "DomainInterfaces", targets: ["DomainInterfaces"])
     ],
     targets: [
-        .target(name: "DomainInterfaces"),
+        .target(
+            name: "DomainInterfaces",
+            swiftSettings: [
+                .enableExperimentalFeature("StrictConcurrency"),
+                .enableUpcomingFeature("ExistentialAny")
+            ]
+        ),
         .testTarget(name: "DomainInterfacesTests", dependencies: ["DomainInterfaces"])
     ]
 )

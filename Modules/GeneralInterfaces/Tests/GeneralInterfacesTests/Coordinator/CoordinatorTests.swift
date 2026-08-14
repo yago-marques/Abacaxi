@@ -1,6 +1,7 @@
 import XCTest
 @testable import GeneralInterfaces
 
+@MainActor
 final class CoordinatorTests: XCTestCase {
     private struct StubAction: CoordinatorActionProtocol {}
 

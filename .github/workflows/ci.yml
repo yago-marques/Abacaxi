@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.4'
+
+      - name: Install tools
+        run: brew install xcodegen swiftgen swiftlint
+
+      - name: Bootstrap
+        run: make bootstrap
+
+      - name: Generate localizations
+        run: make generate-localizations
+
+      - name: Generate Xcode project
+        run: make generate
+
+      - name: Lint (strict)
+        run: make lint-strict
+
+      - name: Test
+        run: make test TEST_DESTINATION='platform=iOS Simulator,name=iPhone 16'

@@ -8,7 +8,7 @@ final class ConsoleRequestLoggerTests: XCTestCase {
         let url = try XCTUnwrap(URL(string: "https://api.example.com/accounts"))
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.httpBody = #"{"name":"Ana","age":30}"#.data(using: .utf8)
+        request.httpBody = Data(#"{"name":"Ana","age":30}"#.utf8)
 
         logger.logRequest(request)
 
@@ -28,7 +28,7 @@ final class ConsoleRequestLoggerTests: XCTestCase {
             httpVersion: nil,
             headerFields: nil
         )
-        let plainTextBody = "not json".data(using: .utf8)
+        let plainTextBody = Data("not json".utf8)
 
         logger.logResponse(response, data: plainTextBody, error: nil)
 

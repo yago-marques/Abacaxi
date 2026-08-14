@@ -3,6 +3,7 @@ excluded:
   - "**/.swiftpm"
   - "**/DerivedData"
   - "Abacaxi.xcodeproj"
+  - "Modules/*/Sources/*/Resources/Generated"
 
 opt_in_rules:
   - closure_spacing

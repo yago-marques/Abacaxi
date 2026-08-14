@@ -12,15 +12,21 @@ final class HomeExternalRouter: HomeExternalRouterProtocol {
         self.useCaseContainer = useCaseContainer
     }
 
-    func openRecipeCreation() -> CoordinatorProtocol {
+    func openRecipeCreation(onFinish: @escaping () -> Void) -> CoordinatorProtocol {
         RecipeModule.start(
             navigationController: navigationController,
             entryPoint: .creation,
-            useCaseContainer: useCaseContainer
+            useCaseContainer: useCaseContainer,
+            onFinish: onFinish
         )
     }
 
-    func openSavedRecipes() -> CoordinatorProtocol {
-        RecipeModule.start(navigationController: navigationController, entryPoint: .myRecipes, useCaseContainer: useCaseContainer)
+    func openSavedRecipes(onFinish: @escaping () -> Void) -> CoordinatorProtocol {
+        RecipeModule.start(
+            navigationController: navigationController,
+            entryPoint: .myRecipes,
+            useCaseContainer: useCaseContainer,
+            onFinish: onFinish
+        )
     }
 }

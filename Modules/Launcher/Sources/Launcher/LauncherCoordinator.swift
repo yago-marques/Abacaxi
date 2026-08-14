@@ -47,7 +47,9 @@ public final class LauncherCoordinator: CoordinatorProtocol {
         isExitScheduled = true
 
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.minimumDisplayDuration) { [weak self] in
-            self?.launcherViewController?.closeLauncher()
+            MainActor.assumeIsolated {
+                self?.launcherViewController?.closeLauncher()
+            }
         }
     }
 }

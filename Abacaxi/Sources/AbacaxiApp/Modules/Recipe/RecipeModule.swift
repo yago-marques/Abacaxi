@@ -24,11 +24,13 @@ enum RecipeModule {
         }
     }
 
+    @MainActor
     @discardableResult
     static func start(
         navigationController: UINavigationController,
         entryPoint: RecipeModuleFactory.EntryPoint,
-        useCaseContainer: UseCaseContainer
+        useCaseContainer: UseCaseContainer,
+        onFinish: @escaping () -> Void = {}
     ) -> CoordinatorProtocol {
         let coordinator = RecipeModuleFactory.makeCoordinator(
             navigationController: navigationController,
@@ -38,7 +40,8 @@ enum RecipeModule {
             saveRecipeUseCase: useCaseContainer.resolve(SaveRecipeUseCaseProtocol.self),
             getSavedRecipesUseCase: useCaseContainer.resolve(GetSavedRecipesUseCaseProtocol.self),
             getSavedRecipeUseCase: useCaseContainer.resolve(GetSavedRecipeUseCaseProtocol.self),
-            removeSavedRecipeUseCase: useCaseContainer.resolve(RemoveSavedRecipeUseCaseProtocol.self)
+            removeSavedRecipeUseCase: useCaseContainer.resolve(RemoveSavedRecipeUseCaseProtocol.self),
+            onFinish: onFinish
         )
         coordinator.start()
         return coordinator

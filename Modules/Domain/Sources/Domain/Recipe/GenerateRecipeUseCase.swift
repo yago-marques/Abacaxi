@@ -26,7 +26,9 @@ public final class GenerateRecipeUseCase: GenerateRecipeUseCaseProtocol {
         ingredients: [RecipeIngredientBusinessModel],
         answers: [RecipeAnswerBusinessModel]
     ) async throws -> RecipeBusinessModel {
-        guard (2...15).contains(ingredients.count) else { throw GenerateRecipeError.invalidIngredientCount }
+        guard IngredientLimits.range.contains(ingredients.count) else {
+            throw GenerateRecipeError.invalidIngredientCount
+        }
         guard let deviceID = try deviceIDRepository.load() else { throw GenerateRecipeError.missingDeviceID }
 
         do {
@@ -41,6 +43,8 @@ public final class GenerateRecipeUseCase: GenerateRecipeUseCaseProtocol {
             case .rateLimited: GenerateRecipeError.rateLimited
             case .temporarilyUnavailable: GenerateRecipeError.temporarilyUnavailable
             case .invalidResponse: GenerateRecipeError.invalidResponse
+            case .network: GenerateRecipeError.noConnection
+            case .cancelled: GenerateRecipeError.cancelled
             }
         }
     }

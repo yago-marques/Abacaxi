@@ -23,7 +23,7 @@ run_tests() {
       schemes=("${module_name}Tests")
     else
       local destination_id
-      destination_id="$(xcrun simctl list devices booted | sed -nE 's/.*\\(([A-F0-9-]{36})\\).*/\\1/p' | head -n 1)"
+      destination_id="$(xcrun simctl list devices booted | sed -nE 's/.*\(([A-F0-9-]{36})\).*/\1/p' | head -n 1)"
       if [[ -z "$destination_id" ]]; then
         echo "No booted iOS Simulator found; unable to build $module_name." >&2
         return 1
@@ -37,12 +37,17 @@ run_tests() {
         build
       return
     fi
+  elif [[ -n "$file_path" ]]; then
+    # App-shell files: the full AllTests suite exceeds the hook timeout.
+    # Run it via `make test` or rely on CI; the hook covers lint + rules.
+    echo "File outside Modules/: skipping test run (use 'make test' or CI for the AllTests suite)."
+    return 0
   else
     schemes=("AllTests")
   fi
 
   local destination_id
-  destination_id="$(xcrun simctl list devices booted | sed -nE 's/.*\\(([A-F0-9-]{36})\\).*/\\1/p' | head -n 1)"
+  destination_id="$(xcrun simctl list devices booted | sed -nE 's/.*\(([A-F0-9-]{36})\).*/\1/p' | head -n 1)"
 
   if [[ -z "$destination_id" ]]; then
     echo "No booted iOS Simulator found; unable to run unit tests." >&2
@@ -78,7 +83,7 @@ print_code_rules() {
     rule_files+=("20-swift.md" "30-architecture.md")
 
     if [[ "$file_path" == *View.swift || "$file_path" == *ViewController.swift ]] || \
-      rg -q '^import (UIKit|SwiftUI)$' "$file_path"; then
+      grep -qE '^import (UIKit|SwiftUI)$' "$file_path"; then
       rule_files+=("40-uikit.md")
     fi
 

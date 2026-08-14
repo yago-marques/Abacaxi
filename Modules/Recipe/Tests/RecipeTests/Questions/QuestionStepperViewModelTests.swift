@@ -57,50 +57,6 @@ struct QuestionStepperViewModelTests {
 
         #expect(didRequestBack)
     }
-
-    @Test func recipeFlow_openQuestions_ignoresEmptyCollection() {
-        let sut = RecipeFlowViewModel(entryPoint: .creation, onFinish: {})
-
-        sut.openQuestions(ingredients: [], questions: [])
-
-        #expect(sut.path.isEmpty)
-    }
-
-    @Test func recipeFlow_openQuestions_storesQuestionsAndAddsStepperRoute() {
-        let sut = RecipeFlowViewModel(entryPoint: .creation, onFinish: {})
-
-        sut.openQuestions(ingredients: [], questions: questions)
-
-        #expect(sut.questions == questions)
-        #expect(sut.path == [.questions])
-    }
-
-    @Test func recipeFlow_finishFlow_callsTheFlowCompletion() {
-        var didFinish = false
-        let sut = RecipeFlowViewModel(entryPoint: .creation) {
-            didFinish = true
-        }
-
-        sut.finishFlow()
-
-        #expect(didFinish)
-    }
-
-    @Test func recipeFlow_showGeneratedRecipe_setsGeneratedResultContext() {
-        let sut = RecipeFlowViewModel(entryPoint: .creation, onFinish: {})
-
-        sut.showGeneratedRecipe(recipe)
-
-        #expect(sut.resultContext == .generated)
-    }
-
-    @Test func recipeFlow_showSavedRecipe_setsSavedResultContext() {
-        let sut = RecipeFlowViewModel(entryPoint: .myRecipes, onFinish: {})
-
-        sut.showSavedRecipe(recipe, id: "saved-id")
-
-        #expect(sut.resultContext == .saved(id: "saved-id"))
-    }
 }
 
 private extension QuestionStepperViewModelTests {
@@ -109,19 +65,6 @@ private extension QuestionStepperViewModelTests {
             .init(id: "type", text: "Qual prato?", options: ["Massa", "Rápido"], allowsCustomAnswer: true),
             .init(id: "time", text: "Quanto tempo?", options: ["30 minutos"], allowsCustomAnswer: false)
         ]
-    }
-
-    var recipe: RecipeBusinessModel {
-        RecipeBusinessModel(
-            title: "Receita",
-            description: "Descrição",
-            ingredients: [],
-            steps: [],
-            preparationTimeMinutes: 20,
-            servings: 2,
-            nutrition: nil,
-            imageData: nil
-        )
     }
 
     func makeSUT(questions: [RecipeQuestionPresentationModel]? = nil) -> QuestionStepperViewModel {

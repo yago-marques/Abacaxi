@@ -25,11 +25,13 @@ public final class RecipeRepository: RecipeRepositoryProtocol {
     ) async throws -> RecipeBusinessModel {
         do {
             let response: RecipeResponseRemoteModel = try await httpClient.send(
-                Endpoint(deviceID: deviceID, apiKey: apiKey, ingredients: ingredients, answers: answers)
+                try Endpoint(deviceID: deviceID, apiKey: apiKey, ingredients: ingredients, answers: answers)
             )
             return RecipeBusinessModel(response: response)
-        } catch let NetworkError.statusCode(_, data) {
-            throw mapError(data: data)
+        } catch let error as NetworkError {
+            throw map(error)
+        } catch {
+            throw RecipeRepositoryError.invalidResponse
         }
     }
 }
@@ -38,32 +40,42 @@ private extension RecipeRepository {
     struct Endpoint: HTTPEndpointProtocol {
         let deviceID: UUID
         let apiKey: String
-        let ingredients: [RecipeIngredientBusinessModel]
-        let answers: [RecipeAnswerBusinessModel]
+        let body: Data?
 
         let path = "/v1/recipe"
         let method: HTTPMethod = .post
 
+        init(
+            deviceID: UUID,
+            apiKey: String,
+            ingredients: [RecipeIngredientBusinessModel],
+            answers: [RecipeAnswerBusinessModel]
+        ) throws {
+            self.deviceID = deviceID
+            self.apiKey = apiKey
+            body = try JSONEncoder().encode(RecipeRequestRemoteModel(ingredients: ingredients, answers: answers))
+        }
+
         var headers: HTTPHeaders {
             ["Content-Type": "application/json", "X-Device-ID": deviceID.uuidString, "X-API-Key": apiKey]
         }
+    }
 
-        var body: Data? {
-            try? JSONEncoder().encode(RecipeRequestRemoteModel(ingredients: ingredients, answers: answers))
+    func map(_ error: NetworkError) -> RecipeRepositoryError {
+        switch error {
+        case let .statusCode(_, data): mapError(data: data)
+        case .transport: .network
+        case .cancelled: .cancelled
+        case .invalidURL, .invalidResponse, .decoding: .invalidResponse
         }
     }
 
     func mapError(data: Data?) -> RecipeRepositoryError {
-        guard let data,
-              let response = try? JSONDecoder().decode(RecipeErrorRemoteModel.self, from: data) else {
-            return .invalidResponse
-        }
-
-        return switch response.detail.error.code {
-        case "INVALID_INGREDIENTS", "TOO_FEW_INGREDIENTS": .invalidIngredients
-        case "RATE_LIMITED": .rateLimited
-        case "LLM_TIMEOUT", "LLM_INVALID_RESPONSE", "RECIPE_VALIDATION_FAILED": .temporarilyUnavailable
-        default: .invalidResponse
+        switch BackendErrorRemoteModel.code(from: data) {
+        case .invalidIngredients, .tooFewIngredients: .invalidIngredients
+        case .rateLimited: .rateLimited
+        case .llmTimeout, .llmInvalidResponse, .recipeValidationFailed: .temporarilyUnavailable
+        case nil: .invalidResponse
         }
     }
 }
@@ -84,11 +96,7 @@ private struct RecipeIngredientRemoteModel: Encodable {
 
     init(_ businessModel: RecipeIngredientBusinessModel) {
         name = businessModel.name
-        amount = switch businessModel.amount {
-        case .little: "pouco"
-        case .medium: "medio"
-        case .much: "muito"
-        }
+        amount = businessModel.amount.remoteValue
     }
 }
 
@@ -122,17 +130,23 @@ private struct RecipeResponseRemoteModel: Decodable {
     }
 }
 
-private struct RecipeIngredientDetailRemoteModel: Decodable { let name: String; let quantity: String }
+private struct RecipeIngredientDetailRemoteModel: Decodable {
+    let name: String
+    let quantity: String
+}
+
 private struct RecipeNutritionRemoteModel: Decodable {
     let calories: Int
     let proteinGrams: Int
     let carbsGrams: Int
     let fatGrams: Int
-    enum CodingKeys: String, CodingKey { case calories; case proteinGrams = "protein_g"; case carbsGrams = "carbs_g"; case fatGrams = "fat_g" }
-}
-private struct RecipeErrorRemoteModel: Decodable {
-    struct Detail: Decodable { struct ErrorDetail: Decodable { let code: String }; let error: ErrorDetail }
-    let detail: Detail
+
+    enum CodingKeys: String, CodingKey {
+        case calories
+        case proteinGrams = "protein_g"
+        case carbsGrams = "carbs_g"
+        case fatGrams = "fat_g"
+    }
 }
 
 private extension RecipeBusinessModel {
@@ -145,7 +159,12 @@ private extension RecipeBusinessModel {
             preparationTimeMinutes: response.preparationTimeMinutes,
             servings: response.servings,
             nutrition: response.nutrition.map {
-                .init(calories: $0.calories, proteinGrams: $0.proteinGrams, carbsGrams: $0.carbsGrams, fatGrams: $0.fatGrams)
+                .init(
+                    calories: $0.calories,
+                    proteinGrams: $0.proteinGrams,
+                    carbsGrams: $0.carbsGrams,
+                    fatGrams: $0.fatGrams
+                )
             },
             imageData: response.imageBase64.flatMap { Data(base64Encoded: $0) }
         )

@@ -27,11 +27,13 @@ public final class RecipeQuestionsRepository: RecipeQuestionsRepositoryProtocol 
     ) async throws -> [RecipeQuestionBusinessModel] {
         do {
             let response: RecipeQuestionsResponseRemoteModel = try await httpClient.send(
-                Endpoint(deviceID: deviceID, apiKey: apiKey, ingredients: ingredients)
+                try Endpoint(deviceID: deviceID, apiKey: apiKey, ingredients: ingredients)
             )
             return response.questions.map(RecipeQuestionBusinessModel.init)
-        } catch let NetworkError.statusCode(_, data) {
-            throw mapError(data: data)
+        } catch let error as NetworkError {
+            throw map(error)
+        } catch {
+            throw RecipeQuestionsRepositoryError.invalidResponse
         }
     }
 }
@@ -40,10 +42,20 @@ private extension RecipeQuestionsRepository {
     struct Endpoint: HTTPEndpointProtocol {
         let deviceID: UUID
         let apiKey: String
-        let ingredients: [RecipeIngredientBusinessModel]
+        let body: Data?
 
         let path = "/v1/questions"
         let method: HTTPMethod = .post
+
+        init(
+            deviceID: UUID,
+            apiKey: String,
+            ingredients: [RecipeIngredientBusinessModel]
+        ) throws {
+            self.deviceID = deviceID
+            self.apiKey = apiKey
+            body = try JSONEncoder().encode(RecipeQuestionsRequestRemoteModel(ingredients: ingredients))
+        }
 
         var headers: HTTPHeaders {
             [
@@ -52,23 +64,23 @@ private extension RecipeQuestionsRepository {
                 "X-API-Key": apiKey
             ]
         }
+    }
 
-        var body: Data? {
-            try? JSONEncoder().encode(RecipeQuestionsRequestRemoteModel(ingredients: ingredients))
+    func map(_ error: NetworkError) -> RecipeQuestionsRepositoryError {
+        switch error {
+        case let .statusCode(_, data): mapError(data: data)
+        case .transport: .network
+        case .cancelled: .cancelled
+        case .invalidURL, .invalidResponse, .decoding: .invalidResponse
         }
     }
 
     func mapError(data: Data?) -> RecipeQuestionsRepositoryError {
-        guard let data,
-              let response = try? JSONDecoder().decode(RecipeQuestionsErrorRemoteModel.self, from: data) else {
-            return .invalidResponse
-        }
-
-        return switch response.detail.error.code {
-        case "INVALID_INGREDIENTS", "TOO_FEW_INGREDIENTS": RecipeQuestionsRepositoryError.invalidIngredients
-        case "RATE_LIMITED": RecipeQuestionsRepositoryError.rateLimited
-        case "LLM_TIMEOUT", "LLM_INVALID_RESPONSE", "RECIPE_VALIDATION_FAILED": RecipeQuestionsRepositoryError.temporarilyUnavailable
-        default: RecipeQuestionsRepositoryError.invalidResponse
+        switch BackendErrorRemoteModel.code(from: data) {
+        case .invalidIngredients, .tooFewIngredients: .invalidIngredients
+        case .rateLimited: .rateLimited
+        case .llmTimeout, .llmInvalidResponse, .recipeValidationFailed: .temporarilyUnavailable
+        case nil: .invalidResponse
         }
     }
 }
@@ -87,11 +99,7 @@ private struct IngredientRemoteModel: Encodable {
 
     init(_ businessModel: RecipeIngredientBusinessModel) {
         name = businessModel.name
-        switch businessModel.amount {
-        case .little: amount = "pouco"
-        case .medium: amount = "medio"
-        case .much: amount = "muito"
-        }
+        amount = businessModel.amount.remoteValue
     }
 }
 
@@ -122,16 +130,4 @@ private extension RecipeQuestionBusinessModel {
             allowsCustomAnswer: remoteModel.allowCustom
         )
     }
-}
-
-private struct RecipeQuestionsErrorRemoteModel: Decodable {
-    struct Detail: Decodable {
-        struct ErrorDetail: Decodable {
-            let code: String
-        }
-
-        let error: ErrorDetail
-    }
-
-    let detail: Detail
 }

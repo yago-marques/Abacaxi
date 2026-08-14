@@ -45,6 +45,14 @@ targetTemplates:
         buildPhase: none
       - path: Abacaxi/Resources/Assets.xcassets
         buildPhase: resources
+    preBuildScripts:
+      - name: Validate API Key
+        basedOnDependencyAnalysis: false
+        script: |
+          if [ -z "${API_KEY:-}" ] || [ "${API_KEY}" = "<your-api-key>" ]; then
+            echo "error: API_KEY is not configured. Copy Configs/Secrets.example.xcconfig to Configs/Secrets.xcconfig and set your key (make start does the copy for you)."
+            exit 1
+          fi
     dependencies:
       - package: NetworkInterfaces
       - package: Network

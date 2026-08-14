@@ -11,6 +11,7 @@ final class RecipeCoordinator: CoordinatorProtocol {
     private let getSavedRecipesUseCase: GetSavedRecipesUseCaseProtocol
     private let getSavedRecipeUseCase: GetSavedRecipeUseCaseProtocol
     private let removeSavedRecipeUseCase: RemoveSavedRecipeUseCaseProtocol
+    private let onFinish: () -> Void
 
     init(
         navigationController: UINavigationController,
@@ -20,7 +21,8 @@ final class RecipeCoordinator: CoordinatorProtocol {
         saveRecipeUseCase: SaveRecipeUseCaseProtocol,
         getSavedRecipesUseCase: GetSavedRecipesUseCaseProtocol,
         getSavedRecipeUseCase: GetSavedRecipeUseCaseProtocol,
-        removeSavedRecipeUseCase: RemoveSavedRecipeUseCaseProtocol
+        removeSavedRecipeUseCase: RemoveSavedRecipeUseCaseProtocol,
+        onFinish: @escaping () -> Void = {}
     ) {
         self.navigationController = navigationController
         self.entryPoint = entryPoint
@@ -30,6 +32,7 @@ final class RecipeCoordinator: CoordinatorProtocol {
         self.getSavedRecipesUseCase = getSavedRecipesUseCase
         self.getSavedRecipeUseCase = getSavedRecipeUseCase
         self.removeSavedRecipeUseCase = removeSavedRecipeUseCase
+        self.onFinish = onFinish
     }
 
     func start() {
@@ -42,8 +45,13 @@ final class RecipeCoordinator: CoordinatorProtocol {
             getSavedRecipesUseCase: getSavedRecipesUseCase,
             getSavedRecipeUseCase: getSavedRecipeUseCase,
             removeSavedRecipeUseCase: removeSavedRecipeUseCase,
-            onFinish: { [weak self] in
-                self?.navigationController.popViewController(animated: true)
+            onFinish: { [weak navigationController = navigationController] in
+                navigationController?.popViewController(animated: true)
+            },
+            // Fires on both programmatic finish (after the pop above) and
+            // interactive swipe-back, so the parent can release this coordinator.
+            onDismiss: { [weak self] in
+                self?.onFinish()
             }
         )
         navigationController.pushViewController(viewController, animated: true)

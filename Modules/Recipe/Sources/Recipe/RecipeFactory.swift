@@ -3,6 +3,8 @@ import SwiftUI
 import UIKit
 
 enum RecipeFactory {
+    @MainActor
+    // swiftlint:disable:next function_parameter_count
     static func makeFlowViewController(
         entryPoint: RecipeModuleFactory.EntryPoint,
         getRecipeQuestionsUseCase: GetRecipeQuestionsUseCaseProtocol,
@@ -11,7 +13,8 @@ enum RecipeFactory {
         getSavedRecipesUseCase: GetSavedRecipesUseCaseProtocol,
         getSavedRecipeUseCase: GetSavedRecipeUseCaseProtocol,
         removeSavedRecipeUseCase: RemoveSavedRecipeUseCaseProtocol,
-        onFinish: @escaping () -> Void
+        onFinish: @escaping () -> Void,
+        onDismiss: @escaping () -> Void = {}
     ) -> UIViewController {
         UIHostingController(
             rootView: RecipeFlowView(
@@ -22,7 +25,8 @@ enum RecipeFactory {
                 getSavedRecipesUseCase: getSavedRecipesUseCase,
                 getSavedRecipeUseCase: getSavedRecipeUseCase,
                 removeSavedRecipeUseCase: removeSavedRecipeUseCase,
-                onFinish: onFinish
+                onFinish: onFinish,
+                onDismiss: onDismiss
             )
         )
     }

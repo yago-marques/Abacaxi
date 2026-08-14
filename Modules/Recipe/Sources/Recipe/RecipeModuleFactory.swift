@@ -8,6 +8,8 @@ public enum RecipeModuleFactory {
         case myRecipes
     }
 
+    @MainActor
+    // swiftlint:disable:next function_parameter_count
     public static func makeCoordinator(
         navigationController: UINavigationController,
         entryPoint: EntryPoint,
@@ -16,7 +18,8 @@ public enum RecipeModuleFactory {
         saveRecipeUseCase: SaveRecipeUseCaseProtocol,
         getSavedRecipesUseCase: GetSavedRecipesUseCaseProtocol,
         getSavedRecipeUseCase: GetSavedRecipeUseCaseProtocol,
-        removeSavedRecipeUseCase: RemoveSavedRecipeUseCaseProtocol
+        removeSavedRecipeUseCase: RemoveSavedRecipeUseCaseProtocol,
+        onFinish: @escaping () -> Void = {}
     ) -> CoordinatorProtocol {
         RecipeCoordinator(
             navigationController: navigationController,
@@ -26,7 +29,8 @@ public enum RecipeModuleFactory {
             saveRecipeUseCase: saveRecipeUseCase,
             getSavedRecipesUseCase: getSavedRecipesUseCase,
             getSavedRecipeUseCase: getSavedRecipeUseCase,
-            removeSavedRecipeUseCase: removeSavedRecipeUseCase
+            removeSavedRecipeUseCase: removeSavedRecipeUseCase,
+            onFinish: onFinish
         )
     }
 }

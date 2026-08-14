@@ -12,21 +12,21 @@ public final class DSTextField: UITextField {
         nil
     }
 
-    public override func textRect(forBounds bounds: CGRect) -> CGRect {
+    override public func textRect(forBounds bounds: CGRect) -> CGRect {
         bounds.inset(by: contentInsets)
     }
 
-    public override func editingRect(forBounds bounds: CGRect) -> CGRect {
+    override public func editingRect(forBounds bounds: CGRect) -> CGRect {
         bounds.inset(by: contentInsets)
     }
 
-    public override func becomeFirstResponder() -> Bool {
+    override public func becomeFirstResponder() -> Bool {
         let result = super.becomeFirstResponder()
         updateBorderColor()
         return result
     }
 
-    public override func resignFirstResponder() -> Bool {
+    override public func resignFirstResponder() -> Bool {
         let result = super.resignFirstResponder()
         updateBorderColor()
         return result

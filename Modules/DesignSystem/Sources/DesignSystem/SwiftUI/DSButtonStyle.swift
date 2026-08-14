@@ -73,7 +73,6 @@ public struct DSButtonStyle: ButtonStyle {
         case .primary, .secondary, .text: "play.fill"
         }
     }
-
 }
 
 public extension ButtonStyle where Self == DSButtonStyle {

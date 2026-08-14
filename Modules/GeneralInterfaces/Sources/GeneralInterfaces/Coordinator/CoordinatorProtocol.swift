@@ -1,5 +1,6 @@
 import UIKit
 
+@MainActor
 public protocol CoordinatorProtocol: AnyObject {
     var navigationController: UINavigationController { get }
 

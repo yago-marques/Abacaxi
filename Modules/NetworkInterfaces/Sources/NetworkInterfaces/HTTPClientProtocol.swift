@@ -5,5 +5,5 @@ public protocol HTTPClientProtocol {
     func send<E: HTTPEndpointProtocol, T: Decodable>(
         _ endpoint: E,
         completion: @escaping (Result<T, NetworkError>) -> Void
-    ) -> CancellableProtocol
+    ) -> any CancellableProtocol
 }

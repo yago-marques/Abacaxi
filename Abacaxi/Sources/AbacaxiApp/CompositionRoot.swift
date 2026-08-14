@@ -1,6 +1,7 @@
 import GeneralInterfaces
 
 enum CompositionRoot {
+    @MainActor
     static func makeAppCoordinator() -> AppCoordinator {
         let useCaseContainer = UseCaseContainer()
         LauncherModule.registerDependencies(in: useCaseContainer)

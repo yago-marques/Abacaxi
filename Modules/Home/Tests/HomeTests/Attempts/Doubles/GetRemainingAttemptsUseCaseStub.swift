@@ -1,12 +1,11 @@
 import DomainInterfaces
 
 final class GetRemainingAttemptsUseCaseStub: GetRemainingAttemptsUseCaseProtocol {
-    var stubbedResult: Result<RemainingAttempts, Error>?
+    var stubbedResult: Result<RemainingAttempts, Error> = .success(
+        RemainingAttempts(remaining: 0, limit: 20, windowSeconds: 3_600)
+    )
 
     func execute() async throws -> RemainingAttempts {
-        guard let stubbedResult else {
-            fatalError("Configure stubbedResult before executing the use case.")
-        }
-        return try stubbedResult.get()
+        try stubbedResult.get()
     }
 }

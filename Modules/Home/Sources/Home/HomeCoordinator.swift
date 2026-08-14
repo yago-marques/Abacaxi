@@ -33,9 +33,13 @@ final class HomeCoordinator: CoordinatorProtocol {
             guard !(navigationController.viewControllers.first is OnboardingViewController) else { return }
             showOnboarding()
         case .openRecipeCreation:
-            childCoordinator = externalRouter.openRecipeCreation()
+            childCoordinator = externalRouter.openRecipeCreation { [weak self] in
+                self?.childCoordinator = nil
+            }
         case .openSavedRecipes:
-            childCoordinator = externalRouter.openSavedRecipes()
+            childCoordinator = externalRouter.openSavedRecipes { [weak self] in
+                self?.childCoordinator = nil
+            }
         }
     }
 

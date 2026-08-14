@@ -3,6 +3,7 @@ import GeneralInterfaces
 import UIKit
 
 public enum LauncherFactory {
+    @MainActor
     public static func makeViewController(
         useCaseContainer: UseCaseContainer,
         coordinator: CoordinatorProtocol
