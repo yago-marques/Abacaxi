@@ -1,6 +1,6 @@
 # Abacaxi
 
-<img width="512" height="512" alt="Abacaxi" src="https://github.com/user-attachments/assets/40342f27-1343-4d34-a791-fb7181661fff" />
+<img width="180" height="180" alt="Abacaxi" src="https://github.com/user-attachments/assets/40342f27-1343-4d34-a791-fb7181661fff" />
 
 **Abacaxi** é um app iOS que transforma ingredientes disponíveis em receitas personalizadas com IA. O usuário informa os ingredientes e suas quantidades, responde a perguntas de contexto e recebe uma receita que pode salvar localmente para consultar depois.
 
@@ -60,7 +60,7 @@ SPM torna essas decisões verificáveis no build: dependências indevidas não s
 
 ### UIKit e SwiftUI
 
-`Home` foi implementado em UIKit e `Recipe` em SwiftUI de forma deliberada. A escolha demonstra técnicas de composição, estado, navegação e Design System nos dois frameworks, sem forçar uma falsa uniformidade no código.
+`Home` foi implementado em UIKit e `Recipe` em SwiftUI
 
 Essa convivência é comum em apps nativos maduros: muitas empresas mantêm UIKit em fluxos estáveis enquanto introduzem SwiftUI em novas funcionalidades, ou estão em uma migração gradual. Ter fronteiras de módulo e contratos bem definidos torna essa transição menos arriscada, pois uma feature pode evoluir de framework sem alterar o domínio, a camada de dados ou os fluxos adjacentes.
 
@@ -91,8 +91,8 @@ O app privilegia APIs nativas para reduzir custo de manutenção e manter o comp
 
 ## Ambientes
 
-<img width="30" height="30" alt="abacaxi_stage" src="https://github.com/user-attachments/assets/c0ac4753-eebb-4f62-b05e-653b336b5c9c" />
-<img width="30" height="30" alt="Abacaxi" src="https://github.com/user-attachments/assets/2d9b916b-aa3e-46f4-9fa9-598f34f8cecf" />
+<img width="50" height="50" alt="abacaxi_stage" src="https://github.com/user-attachments/assets/c0ac4753-eebb-4f62-b05e-653b336b5c9c" />
+<img width="50" height="50" alt="Abacaxi" src="https://github.com/user-attachments/assets/2d9b916b-aa3e-46f4-9fa9-598f34f8cecf" />
 
 
 O projeto gera dois targets a partir de `project.yml` e de arquivos `.xcconfig` por ambiente:
@@ -104,7 +104,7 @@ O projeto gera dois targets a partir de `project.yml` e de arquivos `.xcconfig` 
 
 Configurações compartilhadas ficam em `Configs/Base.xcconfig` e `Configs/App.xcconfig`; cada target combina esses valores com seu ambiente. Credenciais locais ficam em `Configs/Secrets.xcconfig`, que não é versionado, e o repositório disponibiliza `Configs/Secrets.example.xcconfig` como referência.
 
-## Desenvolvimento orientado por especificação e IA
+## Desenvolvimento orientado por especificação (SDD) e IA
 
 O desafio foi desenvolvido em uma janela curta de **quatro dias úteis**, entre segunda e sexta-feira, em período de contraturno. Esse limite motivou um processo disciplinado de desenvolvimento assistido por IA, não apenas a aceleração da escrita de código.
 
