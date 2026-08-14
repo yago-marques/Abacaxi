@@ -16,9 +16,10 @@ bootstrap:
 		brew install swiftgen; \
 	fi
 	@installed_version=$$(xcodegen --version | awk '{print $$2}'); \
-	if [ "$$installed_version" != "$(REQUIRED_XCODEGEN_VERSION)" ]; then \
-		echo "error: XcodeGen $(REQUIRED_XCODEGEN_VERSION) required, found $$installed_version"; \
-		echo "Run: brew upgrade xcodegen (or brew install xcodegen@$(REQUIRED_XCODEGEN_VERSION))"; \
+	lowest=$$(printf '%s\n%s\n' "$(REQUIRED_XCODEGEN_VERSION)" "$$installed_version" | sort -V | head -n1); \
+	if [ "$$lowest" != "$(REQUIRED_XCODEGEN_VERSION)" ]; then \
+		echo "error: XcodeGen $(REQUIRED_XCODEGEN_VERSION) or newer required, found $$installed_version"; \
+		echo "Run: brew upgrade xcodegen"; \
 		exit 1; \
 	fi
 
@@ -28,6 +29,7 @@ generate:
 generate-localizations:
 	@find Modules -path '*/Sources/*/swiftgen.yml' -print | while read config; do \
 		echo "Generating localized sources from $$config..."; \
+		mkdir -p "$$(dirname "$$config")/Resources/Generated"; \
 		swiftgen config run --config "$$config"; \
 	done
 
