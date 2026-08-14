@@ -1,5 +1,7 @@
 # Abacaxi
 
+<img width="512" height="512" alt="Abacaxi" src="https://github.com/user-attachments/assets/40342f27-1343-4d34-a791-fb7181661fff" />
+
 **Abacaxi** é um app iOS que transforma ingredientes disponíveis em receitas personalizadas com IA. O usuário informa os ingredientes e suas quantidades, responde a perguntas de contexto e recebe uma receita que pode salvar localmente para consultar depois.
 
 Este repositório é, intencionalmente, mais amplo do que um MVP estrito. Ele foi construído como um objeto de avaliação técnica: a maior superfície de integração permite demonstrar decisões de arquitetura, modularização, persistência, rede, navegação, testabilidade, build e desenvolvimento assistido por IA.
@@ -21,32 +23,7 @@ O projeto usa módulos Swift locais e contratos explícitos entre camadas. A sep
 
 Cada módulo em `Modules/` é um **Swift Package Manager (SPM)** local, com produto, dependências e testes próprios. Além de organizar o código, isso transforma as fronteiras arquiteturais em fronteiras de compilação: cada package pode ser construído e testado isoladamente.
 
-```text
-                                  Abacaxi App Shell
-                         CompositionRoot + FeatureModules
-                                         │
-                 ┌───────────────────────┼───────────────────────┐
-                 ▼                       ▼                       ▼
-        Launcher / Home              Recipe                 Shared builders
-             UIKit                  SwiftUI            stores + HTTP client
-                 │                       │                       │
-                 └─────────────── Presentation ────────────────┘
-                                         │
-                              GeneralInterfaces + DomainInterfaces
-                                         │
-                                      Domain
-                                         │
-                                  DataInterfaces
-                                         │
-                                      Data
-                             ┌───────────┴───────────┐
-                             ▼                       ▼
-                PersistenceInterfaces         NetworkInterfaces
-                             │                       │
-                       Persistence                Network
-                 Core Data / Keychain /       URLSession
-                    UserDefaults
-```
+<img width="675" height="521" alt="image" src="https://github.com/user-attachments/assets/faf5d749-cac6-4778-951b-8ce9a00fb3c1" />
 
 As implementações concretas não sobem para as camadas superiores. A apresentação recebe somente Use Cases definidos em `DomainInterfaces`; `Domain` depende dos contratos de `DataInterfaces`; e `Data` implementa repositories usando contratos de persistência e rede.
 
@@ -113,6 +90,10 @@ O app privilegia APIs nativas para reduzir custo de manutenção e manter o comp
 `XcodeGen` e `SwiftGen` são ferramentas de desenvolvimento instaladas localmente; não são dependências de runtime do aplicativo.
 
 ## Ambientes
+
+<img width="30" height="30" alt="abacaxi_stage" src="https://github.com/user-attachments/assets/c0ac4753-eebb-4f62-b05e-653b336b5c9c" />
+<img width="30" height="30" alt="Abacaxi" src="https://github.com/user-attachments/assets/2d9b916b-aa3e-46f4-9fa9-598f34f8cecf" />
+
 
 O projeto gera dois targets a partir de `project.yml` e de arquivos `.xcconfig` por ambiente:
 
