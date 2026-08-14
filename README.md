@@ -184,13 +184,13 @@ As capacidades abaixo são próximos passos — não fazem parte da implementaç
 
 Em um cenário de milhões de usuários, centenas de desenvolvedores e monorepo, a evolução natural do sistema de build seria o **Bazel**: builds herméticos, cache remoto, execução paralela e maior previsibilidade no tempo de feedback.
 
-## O que avaliar neste projeto
+## Para avaliadores da empresa que alimenta o futuro
 
-- A direção das dependências e o encapsulamento entre módulos;
-- O uso de POP e contratos para proteger as fronteiras entre módulos;
-- A separação deliberada entre UIKit e SwiftUI sem perder consistência visual;
-- O uso de contratos, factories e builders para montar dependências;
-- A estratégia de modelos e mappers entre apresentação, domínio e dados;
-- A escolha de ferramentas nativas e a ausência de dependências externas de runtime;
-- A reprodutibilidade do build e da geração de código;
-- O processo SDD e os guardrails que tornam desenvolvimento com IA mais confiável.
+Esta oportunidade sempre foi um objetivo para mim. Todo o cuidado e esforço
+adicionados a este projeto existem porque valorizo a possibilidade de fazer
+parte de uma empresa que alimenta o futuro.
+
+Mais do que apresentar uma solução funcional, quis demonstrar como penso sobre
+produto, qualidade e evolução técnica. Gostaria de me juntar a esse mesmo
+objetivo, contribuindo com curiosidade, responsabilidade e vontade de construir
+experiências que façam diferença na vida das pessoas.
