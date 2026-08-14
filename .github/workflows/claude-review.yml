@@ -61,3 +61,5 @@ jobs:
             resumo com: veredito geral, contagem de achados por severidade e os pontos
             positivos do PR. Se não houver violações, publique apenas o resumo dizendo
             que o PR segue as regras.
+
+            Escreva TODOS os comentários (inline e resumo) em português do Brasil.
