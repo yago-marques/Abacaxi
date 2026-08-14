@@ -70,8 +70,10 @@ jobs:
 
             Ao final, submeta o veredito formal:
             - Se houver 1+ achado CRÍTICO: `gh pr review <número> --request-changes --body "<resumo>"`;
-            - Caso contrário: `gh pr review <número> --comment --body "<resumo>"`.
-            O resumo deve conter: veredito, contagem de achados por severidade e os
-            pontos positivos do PR. Nunca use --approve.
+            - Se NÃO houver achado crítico: `gh pr review <número> --approve --body "<resumo>"` —
+              a aprovação substitui automaticamente um request-changes anterior seu,
+              destravando o merge após correções.
+            O resumo deve conter: veredito, contagem de achados por severidade (achados
+            de ATENÇÃO não bloqueiam, mas devem constar) e os pontos positivos do PR.
 
             Escreva TODOS os comentários (inline e resumo) em português do Brasil.
