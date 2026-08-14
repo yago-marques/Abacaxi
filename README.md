@@ -60,7 +60,7 @@ SPM torna essas decisões verificáveis no build: dependências indevidas não s
 
 ### UIKit e SwiftUI
 
-`Home` foi implementado em UIKit e `Recipe` em SwiftUI
+`Home` foi implementado em UIKit e `Recipe` em SwiftUI de forma deliberada. A escolha demonstra técnicas de composição, estado, navegação e Design System nos dois frameworks, sem forçar uma falsa uniformidade no código.
 
 Essa convivência é comum em apps nativos maduros: muitas empresas mantêm UIKit em fluxos estáveis enquanto introduzem SwiftUI em novas funcionalidades, ou estão em uma migração gradual. Ter fronteiras de módulo e contratos bem definidos torna essa transição menos arriscada, pois uma feature pode evoluir de framework sem alterar o domínio, a camada de dados ou os fluxos adjacentes.
 
@@ -108,13 +108,19 @@ Configurações compartilhadas ficam em `Configs/Base.xcconfig` e `Configs/App.x
 
 O desafio foi desenvolvido em uma janela curta de **quatro dias úteis**, entre segunda e sexta-feira, em período de contraturno. Esse limite motivou um processo disciplinado de desenvolvimento assistido por IA, não apenas a aceleração da escrita de código.
 
-Mudanças relevantes são discutidas e registradas com OpenSpec em proposta, design, requisitos e tarefas antes da implementação. Modelos de custo-benefício, como **Sonnet**, **GPT-5.6-terra** e **GLM-5.2**, são usados em uma estratégia multi-modelo, escolhida conforme a natureza da atividade.
+O desenvolvimento de uma mudança começa depois que existe uma especificação significativa: proposta, design, requisitos, tarefas, comportamentos esperados e edge cases relevantes. OpenSpec registra esse contexto antes da implementação e permite que decisões e escopo sejam revisados sem depender apenas de conversa ou memória.
+
+Em integrações de API, requests, responses, erros e mappers são modelados de acordo com o contrato publicado pelo servidor em Swagger/OpenAPI. Essa referência é usada para transformar o contrato remoto em `RemoteModels` privados de `Data`, `BusinessModels` de domínio e cenários de falha verificáveis.
+
+Modelos de custo-benefício, como **Sonnet**, **GPT-5.6-terra** e **GLM-5.2**, são usados em uma estratégia multi-modelo, escolhida conforme a natureza da atividade.
 
 O repositório continua sendo a fonte de verdade: especificações, contratos entre módulos, regras de código e testes têm precedência sobre qualquer sugestão de modelo.
 
 ### Guardrails de qualidade e base de conhecimento
 
 As convenções estão organizadas em `.claude/CODE_RULES/` por domínio — testes, Swift, arquitetura, UIKit e validação. Essa é uma base de conhecimento contextual preparada para evoluir para um grafo de decisões técnicas: hoje ela já possui documentos especializados e roteamento por contexto; relações estruturadas e consultáveis entre decisões ainda seriam uma evolução futura.
+
+`AGENTS.md` na raiz define o contrato operacional comum. Arquivos `AGENTS.md` dentro do app-shell e dos módulos adicionam contexto local: responsabilidade, dependências permitidas, entradas públicas, regras de teste e limites arquiteturais. Em conjunto, `AGENTS.md` fornece orientação hierárquica e `CODE_RULES` concentra regras normativas reutilizáveis.
 
 `Scripts/on-write-code-check.sh` identifica o tipo do arquivo alterado e apresenta somente as regras relevantes. O mesmo fluxo combina:
 
@@ -123,7 +129,7 @@ As convenções estão organizadas em `.claude/CODE_RULES/` por domínio — tes
 - revisão contextual das `CODE_RULES`;
 - execução abrangente pelo scheme `AllTests`, que centraliza todos os test targets e coleta coverage.
 
-Isso reduz conhecimento implícito e dá feedback verificável a desenvolvedores e agentes de IA. Uma alteração não depende apenas de memória de conversa ou convenções informais: ela é validada localmente contra regras explícitas e testes isolados.
+Esse conjunto reduz conhecimento implícito e dá feedback verificável a desenvolvedores e agentes de IA. O objetivo é tornar o repositório AI-friendly para entregas incrementais, produtivas, consistentes e com qualidade: uma alteração não depende apenas de memória de conversa ou convenções informais, mas é guiada por contexto local, regras explícitas, contratos e testes isolados.
 
 ## Como executar
 
