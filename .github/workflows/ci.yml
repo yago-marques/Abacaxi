@@ -41,6 +41,7 @@ jobs:
         run: make lint-strict
 
       - name: Test
+        id: test
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             make test-impacted BASE_REF="origin/${{ github.base_ref }}" TEST_DESTINATION='platform=iOS Simulator,name=iPhone 16'
@@ -49,7 +50,7 @@ jobs:
           fi
 
       - name: Publish test report
-        if: ${{ always() && github.event_name == 'pull_request' }}
+        if: ${{ always() && steps.test.outcome != 'skipped' && github.event_name == 'pull_request' }}
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
