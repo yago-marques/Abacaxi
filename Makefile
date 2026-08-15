@@ -2,8 +2,10 @@ PROJECT_NAME := Abacaxi
 XCODEPROJ := $(PROJECT_NAME).xcodeproj
 REQUIRED_XCODEGEN_VERSION := 2.45.3
 TEST_DESTINATION ?= platform=iOS Simulator,name=iPhone 16
+TEST_SCHEME ?= AllTests
+BASE_REF ?= origin/main
 
-.PHONY: start bootstrap generate-localizations generate open clean lint lint-strict test
+.PHONY: start bootstrap generate-localizations generate open clean lint lint-strict test test-impacted
 
 start: bootstrap generate-localizations generate open
 
@@ -54,5 +56,17 @@ lint-strict:
 test:
 	xcodebuild test \
 		-project $(XCODEPROJ) \
-		-scheme AllTests \
+		-scheme $(TEST_SCHEME) \
 		-destination '$(TEST_DESTINATION)'
+
+test-impacted:
+	@set -e; \
+	schemes="$$(bash Scripts/impacted-test-schemes.sh $(BASE_REF) HEAD)"; \
+	if [ -z "$$schemes" ]; then \
+		echo "error: impacted-test-schemes.sh produced no schemes" >&2; \
+		exit 1; \
+	fi; \
+	echo "Impacted test schemes: $$schemes"; \
+	for scheme in $$schemes; do \
+		$(MAKE) test TEST_SCHEME=$$scheme; \
+	done
