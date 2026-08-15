@@ -75,8 +75,10 @@ test-impacted:
 		module="$${scheme%Tests}"; \
 		if [ "$$scheme" != "AllTests" ] && grep -q '\.macOS(' "Modules/$$module/Package.swift" 2>/dev/null; then \
 			echo "==> $$module: swift test (macOS-native, sem simulador)"; \
-			swift test --package-path "Modules/$$module" --xunit-output "$(RESULTS_DIR)/$$module.xml"; \
+			swift test --package-path "Modules/$$module" --xunit-output "$(CURDIR)/$(RESULTS_DIR)/$$module.xml"; \
 		else \
-			$(MAKE) test TEST_SCHEME=$$scheme TEST_RESULT_BUNDLE="$(RESULTS_DIR)/$$scheme.xcresult"; \
+			$(MAKE) test TEST_SCHEME=$$scheme TEST_RESULT_BUNDLE="$(CURDIR)/$(RESULTS_DIR)/$$scheme.xcresult"; \
 		fi; \
-	done
+	done; \
+	echo "Result files in $(RESULTS_DIR):"; \
+	ls -l "$(RESULTS_DIR)" || true

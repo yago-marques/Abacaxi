@@ -61,6 +61,14 @@ done
 for xml in "$results_dir"/*.xml; do
   [[ -f "$xml" ]] || continue
   name="$(basename "$xml" .xml)"
+  # `swift test --xunit-output X.xml` writes X.xml (XCTest) plus
+  # X-swift-testing.xml (Swift Testing). Label the variant and skip it
+  # when empty so modules without Swift Testing don't show a noise row.
+  is_swift_testing=false
+  if [[ "$name" == *-swift-testing ]]; then
+    is_swift_testing=true
+    name="${name%-swift-testing} (Swift Testing)"
+  fi
   counts="$(python3 -c '
 import sys
 import xml.etree.ElementTree as ET
@@ -73,6 +81,9 @@ print(t, t - f - sk, f, sk)
 ' "$xml" 2>/dev/null || echo "")"
   if [[ -z "$counts" ]]; then
     echo "| ⚠️ $name | ? | ? | ? | ? |"
+    continue
+  fi
+  if [[ "$is_swift_testing" == true && "$counts" == 0* ]]; then
     continue
   fi
   # shellcheck disable=SC2086
