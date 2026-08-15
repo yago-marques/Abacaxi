@@ -31,7 +31,7 @@ struct RecipeGenerationLoadingView: View {
         }
         .task {
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 2_400_000_000)
+                try? await Task.sleep(for: .seconds(2.4))
                 guard !Task.isCancelled else { return }
                 withAnimation(.easeInOut(duration: 0.35)) {
                     phraseIndex = (phraseIndex + 1) % phrases.count
