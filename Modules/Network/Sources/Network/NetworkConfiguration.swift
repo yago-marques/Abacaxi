@@ -22,7 +22,13 @@ public struct NetworkConfiguration {
               !rawValue.isEmpty else {
             throw ConfigurationError.missingAPIBaseURL
         }
-        guard let url = URL(string: rawValue) else {
+        // An unsubstituted build setting (missing xcconfig value) reaches the
+        // Info.plist as the literal "$(API_BASE_URL)" and still parses as URL;
+        // reject it and scheme-less values here so misconfiguration fails fast
+        // at composition instead of surfacing as opaque transport errors.
+        guard !rawValue.contains("$("),
+              let url = URL(string: rawValue),
+              url.scheme != nil else {
             throw ConfigurationError.invalidAPIBaseURL(rawValue)
         }
         return NetworkConfiguration(baseURL: url, isLoggingEnabled: isLoggingEnabled)

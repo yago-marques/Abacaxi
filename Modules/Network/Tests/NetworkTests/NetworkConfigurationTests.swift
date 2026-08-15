@@ -28,6 +28,24 @@ final class NetworkConfigurationTests: XCTestCase {
         }
     }
 
+    func test_fromInfoPlist_unsubstitutedBuildSetting_throwsInvalidAPIBaseURL() throws {
+        let placeholder = "$(API_BASE_URL)"
+        let bundle = try makeBundle(infoPlist: ["APIBaseURL": placeholder])
+
+        XCTAssertThrowsError(try NetworkConfiguration.fromInfoPlist(bundle: bundle)) { error in
+            XCTAssertEqual(error as? NetworkConfiguration.ConfigurationError, .invalidAPIBaseURL(placeholder))
+        }
+    }
+
+    func test_fromInfoPlist_schemelessURL_throwsInvalidAPIBaseURL() throws {
+        let schemeless = "api.stage.example.com"
+        let bundle = try makeBundle(infoPlist: ["APIBaseURL": schemeless])
+
+        XCTAssertThrowsError(try NetworkConfiguration.fromInfoPlist(bundle: bundle)) { error in
+            XCTAssertEqual(error as? NetworkConfiguration.ConfigurationError, .invalidAPIBaseURL(schemeless))
+        }
+    }
+
     private func makeBundle(infoPlist: [String: Any]) throws -> Bundle {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
