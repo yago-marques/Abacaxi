@@ -4,6 +4,7 @@ REQUIRED_XCODEGEN_VERSION := 2.45.3
 TEST_DESTINATION ?= platform=iOS Simulator,name=iPhone 16
 TEST_SCHEME ?= AllTests
 BASE_REF ?= origin/main
+RESULTS_DIR ?= build/test-results
 
 .PHONY: start bootstrap generate-localizations generate open clean lint lint-strict test test-impacted
 
@@ -57,7 +58,8 @@ test:
 	xcodebuild test \
 		-project $(XCODEPROJ) \
 		-scheme $(TEST_SCHEME) \
-		-destination '$(TEST_DESTINATION)'
+		-destination '$(TEST_DESTINATION)' \
+		$(if $(TEST_RESULT_BUNDLE),-resultBundlePath "$(TEST_RESULT_BUNDLE)")
 
 test-impacted:
 	@set -e; \
@@ -66,13 +68,15 @@ test-impacted:
 		echo "error: impacted-test-schemes.sh produced no schemes" >&2; \
 		exit 1; \
 	fi; \
+	rm -rf "$(RESULTS_DIR)"; \
+	mkdir -p "$(RESULTS_DIR)"; \
 	echo "Impacted test schemes: $$schemes"; \
 	for scheme in $$schemes; do \
 		module="$${scheme%Tests}"; \
 		if [ "$$scheme" != "AllTests" ] && grep -q '\.macOS(' "Modules/$$module/Package.swift" 2>/dev/null; then \
 			echo "==> $$module: swift test (macOS-native, sem simulador)"; \
-			swift test --package-path "Modules/$$module"; \
+			swift test --package-path "Modules/$$module" --xunit-output "$(RESULTS_DIR)/$$module.xml"; \
 		else \
-			$(MAKE) test TEST_SCHEME=$$scheme; \
+			$(MAKE) test TEST_SCHEME=$$scheme TEST_RESULT_BUNDLE="$(RESULTS_DIR)/$$scheme.xcresult"; \
 		fi; \
 	done
