@@ -68,5 +68,11 @@ test-impacted:
 	fi; \
 	echo "Impacted test schemes: $$schemes"; \
 	for scheme in $$schemes; do \
-		$(MAKE) test TEST_SCHEME=$$scheme; \
+		module="$${scheme%Tests}"; \
+		if [ "$$scheme" != "AllTests" ] && grep -q '\.macOS(' "Modules/$$module/Package.swift" 2>/dev/null; then \
+			echo "==> $$module: swift test (macOS-native, sem simulador)"; \
+			swift test --package-path "Modules/$$module"; \
+		else \
+			$(MAKE) test TEST_SCHEME=$$scheme; \
+		fi; \
 	done

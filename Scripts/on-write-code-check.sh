@@ -20,6 +20,13 @@ run_tests() {
   if [[ -n "$file_path" && "$relative_path" =~ ^Modules/([^/]+)/ ]]; then
     local module_name="${BASH_REMATCH[1]}"
     if [[ -d "$repo_root/Modules/$module_name/Tests" ]]; then
+      # Modules that also declare macOS run natively via swift test —
+      # no simulator required, much faster save-time feedback.
+      if grep -q '\.macOS(' "$repo_root/Modules/$module_name/Package.swift"; then
+        echo "---- Running unit tests (swift test, macOS-native): $module_name ----"
+        swift test --package-path "$repo_root/Modules/$module_name"
+        return
+      fi
       schemes=("${module_name}Tests")
     else
       local destination_id
