@@ -216,7 +216,32 @@ O scheme `AllTests` agrega os test targets de todos os módulos e coleta coverag
 
 Em **pull requests**, o CI roda apenas os testes impactados: `Scripts/impacted-test-schemes.sh` deriva do grafo de packages os módulos alterados e todos os dependentes transitivos, e executa somente esses schemes (`make test-impacted` reproduz localmente). Qualquer mudança fora de `Modules/` — app-shell, manifests, tooling — recai conservadoramente na suíte completa. É o mesmo princípio de test impact analysis que o Bazel entregaria em escala, viabilizado aqui pelo grafo explícito dos módulos SPM.
 
-## Evoluções para escala
+## Integração contínua e revisão automática
+
+A stack de CI foi desenhada em cima da mesma premissa da arquitetura: **fronteiras explícitas tornam o impacto de uma mudança computável**. O grafo de dependências dos packages SPM não organiza só o código — ele alimenta a seleção de trabalho do pipeline.
+
+### Builds otimizados por impacto
+
+Em pull requests, o pipeline calcula o raio de impacto do diff a partir dos `Package.swift` e executa só o necessário:
+
+- **Testes seletivos**: módulos alterados + fecho transitivo de dependentes (`make test-impacted`). Mudar `Data` roda só `DataTests` — nenhuma feature depende de Data, e o grafo prova isso; mudar `DomainInterfaces` (base do grafo) roda os sete schemes dependentes.
+- **Lint seletivo**: apenas os módulos alterados (`make lint-impacted`) — regras de lint são locais ao arquivo, então nem o fecho de dependentes é necessário.
+- **Dois runtimes de teste**: módulos de lógica pura (interfaces, `Domain`, `Data`, `Network`) declaram `.macOS` no manifest e rodam **nativamente via `swift test`, sem simulador** — segundos em vez de minutos; módulos com UIKit/SwiftUI ou infraestrutura real de iOS (`Persistence` usa Keychain via test host) rodam no simulador via `xcodebuild`. Declarar `.macOS` no `Package.swift` é o opt-in: o roteamento é derivado do manifest, não de listas mantidas à mão.
+- **Fallback conservador**: qualquer mudança não-atribuível a um módulo (app-shell, manifests, tooling) executa a suíte completa — a seleção só pode errar para mais.
+- **Rede de segurança**: todo push no `main` roda lint estrito + `AllTests` integral no simulador, garantindo que qualquer divergência escaparia no máximo até o merge.
+
+O hook local (`Scripts/on-write-code-check.sh`) aplica a mesma lógica ao ciclo de save: lint do módulo do arquivo editado e testes pelo runtime adequado.
+
+### Ciclo de revisão com Claude
+
+Todo PR passa por um revisor automático (`claude-review.yml`) que lê as regras normativas do repositório (`.claude/CODE_RULES/` e os `AGENTS.md` dos módulos tocados) e revisa **apenas o diff**, cobrindo o que o SwiftLint não alcança: fronteiras de camada, mudanças de comportamento sem teste, concorrência e segredos. Cada achado vira comentário inline citando a regra violada, classificado por severidade:
+
+- **CRÍTICO** (fronteira violada, comportamento sem teste, segredo hardcoded, teste enfraquecido) → o revisor submete **request changes**, e o ruleset do `main` bloqueia o merge;
+- **ATENÇÃO/SUGESTÃO** → registrados sem bloquear.
+
+O ciclo se fecha sozinho: o push com a correção re-dispara a revisão, e um veredito limpo **aprova formalmente apenas para substituir o próprio bloqueio anterior** — o revisor nunca aprova PRs sem bloqueio prévio e nunca faz merge (a decisão de merge é sempre humana, e `gh pr merge` sequer está no allowlist de ferramentas). Menções `@claude` em comentários (ex.: `@claude re-review`) dão pareceres técnicos sob demanda, sem poder de veredito.
+
+A proteção do `main` está versionada como código em `.github/rulesets/main-protection.json`: merge só via PR, sem request-changes ativo e com o check de build e testes verde.
 
 As capacidades abaixo são próximos passos — não fazem parte da implementação atual:
 
