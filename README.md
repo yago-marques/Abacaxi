@@ -241,6 +241,8 @@ Todo PR passa por um revisor automático (`claude-review.yml`) que lê as regras
 
 O ciclo se fecha sozinho: o push com a correção re-dispara a revisão, e um veredito limpo **aprova formalmente apenas para substituir o próprio bloqueio anterior** — o revisor nunca aprova PRs sem bloqueio prévio e nunca faz merge (a decisão de merge é sempre humana, e `gh pr merge` sequer está no allowlist de ferramentas). Menções `@claude` em comentários (ex.: `@claude re-review`) dão pareceres técnicos sob demanda, sem poder de veredito.
 
+Um efeito deliberado desse desenho: as regras e docs (`CODE_RULES`, `AGENTS.md`) são um **organismo vivo acoplado à implementação**, não documentação que envelhece num canto. Como cada diff é comparado contra os documentos normativos, a auditoria vale nos dois sentidos — código que viola uma regra é bloqueado, e evolução legítima que torna uma regra obsoleta é apontada pelo revisor para atualização **no mesmo PR** que a envelheceu. Foi assim quando o pipeline ganhou o segundo runtime de testes: a revisão sinalizou que `10-testing.md` e `50-validation.md` ainda descreviam o mundo anterior ("bundles executados por xcodebuild no simulador"), e os documentos foram corrigidos junto com a mudança. Quem mantém a base de conhecimento sincronizada com o código é o próprio ciclo de revisão — não a memória de quem escreveu.
+
 A proteção do `main` está versionada como código em `.github/rulesets/main-protection.json`: merge só via PR, sem request-changes ativo e com o check de build e testes verde.
 
 As capacidades abaixo são próximos passos — não fazem parte da implementação atual:
