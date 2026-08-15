@@ -68,12 +68,17 @@ jobs:
             usando a ferramenta de inline comment, citando a regra violada e a severidade,
             e sugerindo a correção no padrão do repositório.
 
-            Ao final, submeta o veredito formal:
+            Ao final, submeta o veredito formal (antes, confira o estado do PR com
+            `gh pr view <número> --json reviewDecision`):
             - Se houver 1+ achado CRÍTICO: `gh pr review <número> --request-changes --body "<resumo>"`;
-            - Se NÃO houver achado crítico: `gh pr review <número> --approve --body "<resumo>"` —
-              a aprovação substitui automaticamente um request-changes anterior seu,
-              destravando o merge após correções.
+            - Se NÃO houver crítico E o reviewDecision for CHANGES_REQUESTED (há um
+              bloqueio anterior seu): `gh pr review <número> --approve --body "<resumo>"` —
+              a aprovação existe SOMENTE para substituir seu próprio bloqueio depois
+              das correções, destravando o merge;
+            - Caso contrário (revisão limpa sem bloqueio anterior):
+              `gh pr review <número> --comment --body "<resumo>"`.
             O resumo deve conter: veredito, contagem de achados por severidade (achados
             de ATENÇÃO não bloqueiam, mas devem constar) e os pontos positivos do PR.
+            Você NUNCA faz merge de PRs — a decisão de merge é sempre humana.
 
             Escreva TODOS os comentários (inline e resumo) em português do Brasil.
