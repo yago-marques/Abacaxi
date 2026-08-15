@@ -20,3 +20,6 @@ Modules/**/Sources/**/Resources/Generated/*.swift
 
 # Claude Code local settings (machine-specific, not shared)
 .claude/settings.local.json
+
+# Build artifacts (test result bundles, reports)
+build/

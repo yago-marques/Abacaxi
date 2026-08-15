@@ -10,6 +10,10 @@ jobs:
     name: Build and Test
     runs-on: macos-15
     timeout-minutes: 45
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,9 +41,17 @@ jobs:
         run: make lint-strict
 
       - name: Test
+        id: test
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             make test-impacted BASE_REF="origin/${{ github.base_ref }}" TEST_DESTINATION='platform=iOS Simulator,name=iPhone 16'
           else
             make test TEST_DESTINATION='platform=iOS Simulator,name=iPhone 16'
           fi
+
+      - name: Publish test report
+        if: ${{ always() && steps.test.outcome != 'skipped' && github.event_name == 'pull_request' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: bash Scripts/publish-test-report.sh build/test-results
