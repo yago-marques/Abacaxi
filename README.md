@@ -216,6 +216,18 @@ O scheme `AllTests` agrega os test targets de todos os módulos e coleta coverag
 
 Em **pull requests**, o CI roda apenas os testes impactados: `Scripts/impacted-test-schemes.sh` deriva do grafo de packages os módulos alterados e todos os dependentes transitivos, e executa somente esses schemes (`make test-impacted` reproduz localmente). Qualquer mudança fora de `Modules/` — app-shell, manifests, tooling — recai conservadoramente na suíte completa. É o mesmo princípio de test impact analysis que o Bazel entregaria em escala, viabilizado aqui pelo grafo explícito dos módulos SPM.
 
+### Regressão visual (snapshot tests)
+
+Os componentes do Design System são protegidos por **snapshot tests** ([swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing)): cada variante visual é renderizada com fixtures determinísticas e comparada pixel a pixel com uma imagem de referência versionada em `__Snapshots__/`. O DS é onde regressão visual mais dói — um token alterado muda a aparência de todos os consumidores sem falhar nenhum teste de lógica.
+
+O desenho parte de uma restrição física: **pixels dependem de device, versão de iOS e Xcode**, e máquinas de desenvolvimento divergem entre si e do CI. Em vez de fingir que não, o sistema declara um único **ambiente canônico** — o runner do CI, com device, OS e Xcode pinados em `.github/workflows/snapshot.yml` — e faz três escolhas decorrentes:
+
+- **Guarda de ambiente**: os testes só executam com `SNAPSHOT_TESTS=1`, exportada exclusivamente pela pipeline de snapshot. Em qualquer outra suíte (`AllTests`, `test-impacted`, hook local) eles dão skip — snapshot nunca falha por divergência de simulador nem bloqueia fluxo que não é dele.
+- **Pipeline dedicada**: PRs que tocam o Design System (ou a fiação de build) disparam a comparação; falhas anexam o diff visual como artifact do run.
+- **Gravação só na CI**: referências nunca nascem em máquina local. `Scripts/record-snapshots.sh` automatiza o ciclo — empurra o HEAD para uma branch `record/*` (que dispara a pipeline em modo record, inclusive antes de merge), baixa o artifact com as imagens e as commita. O diff de PNGs no PR é revisável por humanos: mudança visual intencional fica documentada como imagem, não como afirmação.
+
+Sem nenhuma referência commitada a pipeline entra em modo bootstrap (skip com aviso) em vez de falhar — o sistema se instala sem cerimônia manual. O primeiro ciclo de gravação já se pagou: os snapshots revelaram um desalinhamento real de layout num componente UIKit que nenhum teste estrutural acusava.
+
 ## Integração contínua e revisão automática
 
 A stack de CI foi desenhada em cima da mesma premissa da arquitetura: **fronteiras explícitas tornam o impacto de uma mudança computável**. O grafo de dependências dos packages SPM não organiza só o código — ele alimenta a seleção de trabalho do pipeline.
