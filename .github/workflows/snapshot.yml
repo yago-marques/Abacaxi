@@ -5,16 +5,17 @@
 # outra suíte (AllTests, test-impacted, hook local) eles dão skip, então este
 # workflow é o único lugar onde snapshots falham ou são gravados.
 #
-# Bootstrap: enquanto nenhuma __Snapshots__/ estiver commitada, runs de PR
-# pulam a comparação com um aviso (workflow_dispatch exige o arquivo na branch
-# default, então o primeiro record só é possível após o merge deste workflow).
+# Para (re)gravar referências, use Scripts/record-snapshots.sh (automatiza o
+# ciclo inteiro) ou manualmente:
+#   - push da sua branch para uma branch record/* (funciona antes do merge):
+#       git push -f origin HEAD:record/minha-branch
+#   - ou Actions → Snapshot Tests → Run workflow com record=all
+#     (workflow_dispatch exige o arquivo na branch default)
+#   Depois: baixe o artifact "ds-snapshot-references", `tar -xzf` na raiz do
+#   repo e commite as pastas __Snapshots__/.
 #
-# Para (re)gravar referências:
-#   1. Actions → Snapshot Tests → Run workflow, escolha a branch, record=all
-#      (ou record=missing para gravar só as que faltam)
-#   2. Baixe o artifact "ds-snapshot-references"
-#   3. Na raiz do repo: tar -xzf ds-snapshot-references.tgz
-#   4. Commite as pastas __Snapshots__/ resultantes
+# Sem nenhuma __Snapshots__/ commitada, runs de PR pulam a comparação com um
+# aviso (bootstrap) em vez de falhar por referência ausente.
 name: Snapshot Tests
 
 on:
@@ -24,6 +25,8 @@ on:
       - ".github/workflows/snapshot.yml"
       - "project.yml"
       - "Makefile"
+  push:
+    branches: ["record/**"]
   workflow_dispatch:
     inputs:
       record:
@@ -46,42 +49,51 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check for committed references
-        id: refs
+      - name: Determine mode
+        id: mode
         run: |
-          if find Modules/DesignSystem/Tests -type d -name __Snapshots__ | grep -q .; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Nenhuma __Snapshots__/ commitada ainda — comparação pulada (bootstrap). Grave via workflow_dispatch record=all após o merge."
+          RECORD='never'
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            RECORD='${{ inputs.record }}'
           fi
+          case "${{ github.ref_name }}" in record/*) RECORD='all';; esac
+          RUN='true'
+          if [ "$RECORD" = 'never' ] && \
+             ! find Modules/DesignSystem/Tests -type d -name __Snapshots__ | grep -q .; then
+            RUN='false'
+            echo "::notice::Nenhuma __Snapshots__/ commitada ainda — comparação pulada (bootstrap). Grave com Scripts/record-snapshots.sh."
+          fi
+          echo "record=$RECORD" >> "$GITHUB_OUTPUT"
+          echo "run=$RUN" >> "$GITHUB_OUTPUT"
 
       - uses: maxim-lobanov/setup-xcode@v1
-        if: github.event_name == 'workflow_dispatch' || steps.refs.outputs.found == 'true'
+        if: steps.mode.outputs.run == 'true'
         with:
           xcode-version: "16.4"
 
       - name: Install tooling
-        if: github.event_name == 'workflow_dispatch' || steps.refs.outputs.found == 'true'
+        if: steps.mode.outputs.run == 'true'
         run: brew install xcodegen swiftgen
 
       - name: Bootstrap
-        if: github.event_name == 'workflow_dispatch' || steps.refs.outputs.found == 'true'
+        if: steps.mode.outputs.run == 'true'
         run: make bootstrap
 
       - name: Generate localizations
-        if: github.event_name == 'workflow_dispatch' || steps.refs.outputs.found == 'true'
+        if: steps.mode.outputs.run == 'true'
         run: make generate-localizations
 
       - name: Generate project
-        if: github.event_name == 'workflow_dispatch' || steps.refs.outputs.found == 'true'
+        if: steps.mode.outputs.run == 'true'
         run: make generate
 
+      # Em modo record os asserts falham por design ("Record mode is on") —
+      # o passo seguinte empacota as referências mesmo assim (if: always()).
       - name: Run snapshot tests
-        if: github.event_name == 'workflow_dispatch' || steps.refs.outputs.found == 'true'
+        if: steps.mode.outputs.run == 'true'
         env:
           TEST_RUNNER_SNAPSHOT_TESTS: "1"
-          TEST_RUNNER_SNAPSHOT_TESTING_RECORD: ${{ inputs.record || 'never' }}
+          TEST_RUNNER_SNAPSHOT_TESTING_RECORD: ${{ steps.mode.outputs.record }}
           TEST_RUNNER_SNAPSHOT_ARTIFACTS: ${{ github.workspace }}/build/snapshot-failures
         run: |
           make test \
@@ -91,13 +103,13 @@ jobs:
       # tar preserva os caminhos completos a partir da raiz do repo — o
       # upload-artifact sozinho corta tudo antes do primeiro wildcard.
       - name: Package recorded references
-        if: always() && github.event_name == 'workflow_dispatch' && inputs.record != 'never'
+        if: always() && steps.mode.outputs.record != 'never'
         run: |
           find Modules/DesignSystem/Tests -type d -name __Snapshots__ -print0 \
             | xargs -0 tar -czf ds-snapshot-references.tgz
 
       - name: Upload recorded references
-        if: always() && github.event_name == 'workflow_dispatch' && inputs.record != 'never'
+        if: always() && steps.mode.outputs.record != 'never'
         uses: actions/upload-artifact@v4
         with:
           name: ds-snapshot-references
