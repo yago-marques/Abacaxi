@@ -5,7 +5,7 @@ As convenções do repositório são organizadas por domínio. Cada regra normat
 | Documento | Quando consultar |
 | --- | --- |
 | `10-testing.md` | Testes, doubles, test targets e coverage. |
-| `20-swift.md` | Erros, formatação, protocolos, acesso entre módulos e Swift Testing. |
+| `20-swift.md` | Erros, comentários, formatação, protocolos, acesso entre módulos e Swift Testing. |
 | `30-architecture.md` | Composição, MVVM, coordinators, factories, camadas e modelos. |
 | `40-uikit.md` | Textos de interface, UIKit, layout, constraints e animações. |
 | `50-validation.md` | Hook pós-escrita, lint e execução dos testes. |

@@ -4,7 +4,7 @@
 
 Todo erro lançado (`throws`) é um `enum` conformando `Error`, nunca `struct`. Cada caso de falha vira um `case`, com dado associado quando fizer sentido (ex: código de status, nome da entidade).
 
-Falhas que chegam à apresentação e exigem retorno ao usuário devem, por padrão, usar o toast de erro do Design System com mensagem localizada. O ViewModel emite um estado/caso de falha — nunca a descrição bruta de um `Error` — e a View mapeia esse caso para o `Localizable` antes de apresentar o toast. Exceções só são aceitas quando o erro é deliberadamente não-bloqueante; o `catch` deve documentar esse motivo, jamais ficar vazio.
+Falhas que chegam à apresentação e exigem retorno ao usuário devem, por padrão, usar o toast de erro do Design System com mensagem localizada. O ViewModel emite um estado/caso de falha — nunca a descrição bruta de um `Error` — e a View mapeia esse caso para o `Localizable` antes de apresentar o toast. Exceções só são aceitas quando o erro é deliberadamente não-bloqueante; nesse caso a tolerância fica expressa no próprio código — um `try?` sobre um método privado cujo nome carrega a intenção — nunca num comentário nem num `catch` vazio sem explicação estrutural.
 
 ```swift
 public enum KeychainError: Error {
@@ -14,6 +14,26 @@ public enum KeychainError: Error {
 ```
 
 Motivo: várias formas de falhar dentro do mesmo domínio (Keychain, CoreData, rede) — um `enum` deixa isso exaustivo e faz o `switch` no chamador ser exaustivo também. `struct` força um tipo de erro por domínio inteiro, escondendo os casos possíveis.
+
+## Comentários
+
+Desenvolvemos sem comentários. A intenção do código é expressa pela própria estrutura — nomes de tipos, métodos e variáveis que dizem o porquê, unidades pequenas com responsabilidade única (SOLID) e fronteiras de camada explícitas (Clean Architecture) — nunca por texto ao lado do código. Isso vale para `//`, `///` e `// MARK:` em todo código de produção e de teste.
+
+Se um trecho parece exigir comentário, ele está pedindo refatoração: extraia um método privado cujo nome carrega a justificativa, transforme a explicação em um `case` de enum nomeado, ou fixe o comportamento num teste cujo nome conta a história. Conhecimento que não cabe em código — decisão de arquitetura, contrato congelado, convenção — vive nestes documentos de regras, não num comentário que envelhece longe do build.
+
+```swift
+// Errado
+} catch {
+    // Swallowed: resolution must never block the transition.
+}
+
+// Certo
+try? createDeviceIDIfMissing()
+```
+
+Únicas exceções: marcações exigidas por ferramentas — `// swift-tools-version` em `Package.swift`, diretivas `// swiftlint:disable/enable` — e arquivos gerados (SwiftGen).
+
+Motivo: comentário envelhece separado do código e mente sem quebrar o build; nome, tipo e teste são verificados a cada compilação. Comentário que explica "o que" duplica o código; comentário que explica "por que" denuncia conhecimento que pertence a um nome melhor, a um teste que trava o comportamento ou a uma regra normativa deste repositório.
 
 ## Quebra de linha
 
