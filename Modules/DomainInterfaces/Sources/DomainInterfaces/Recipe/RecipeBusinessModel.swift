@@ -34,7 +34,7 @@ public struct RecipeBusinessModel: Equatable, Sendable {
     }
 }
 
-public struct RecipeIngredientDetailBusinessModel: Codable, Equatable, Sendable {
+public struct RecipeIngredientDetailBusinessModel: Equatable, Sendable {
     public let name: String
     public let quantity: String
 
@@ -44,7 +44,7 @@ public struct RecipeIngredientDetailBusinessModel: Codable, Equatable, Sendable 
     }
 }
 
-public struct RecipeNutritionBusinessModel: Codable, Equatable, Sendable {
+public struct RecipeNutritionBusinessModel: Equatable, Sendable {
     public let calories: Int
     public let proteinGrams: Int
     public let carbsGrams: Int
