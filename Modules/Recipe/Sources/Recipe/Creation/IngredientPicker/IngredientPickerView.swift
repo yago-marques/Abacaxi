@@ -139,8 +139,6 @@ struct IngredientPickerView: View {
             let questions = await viewModel.fetchQuestions()
 
             let elapsed = Date().timeIntervalSince(startedAt)
-            // Keeps the AI-loading screen visible long enough to be readable
-            // even when the questions request resolves instantly.
             let minimumLoadingDuration: TimeInterval = 2
             let remainingDuration = max(0, minimumLoadingDuration - elapsed)
             if remainingDuration > 0 {

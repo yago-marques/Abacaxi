@@ -40,7 +40,6 @@ public struct DSIconButton: View {
                 .frame(width: 36, height: 36)
                 .foregroundStyle(Color.black)
                 .background(Color.dsAccent)
-                // Visual stays 36pt; the tappable area honors the 44pt minimum target.
                 .frame(minWidth: 44, minHeight: 44)
                 .contentShape(Rectangle())
         }

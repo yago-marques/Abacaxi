@@ -4,8 +4,6 @@ import NetworkInterfaces
 
 enum NetworkClientBuilder {
     private enum Constants {
-        // Recipe generation is LLM-backed and can legitimately take up to two
-        // minutes; these ceilings must stay above the backend's worst case.
         static let requestTimeout: TimeInterval = 120
         static let resourceTimeout: TimeInterval = 150
     }

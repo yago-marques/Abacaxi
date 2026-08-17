@@ -18,9 +18,6 @@ public final class KeychainStore: SecureStoringProtocol {
     }
 
     public func save(_ data: Data, forKey key: String) throws {
-        // The stored value gates the product rate limit, so it must stay on this
-        // device only (no backup/keychain migration) and be readable after the
-        // first unlock for background work.
         let attributes: [String: Any] = [
             kSecValueData as String: data,
             kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly

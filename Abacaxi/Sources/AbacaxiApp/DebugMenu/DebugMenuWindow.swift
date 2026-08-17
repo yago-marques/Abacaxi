@@ -1,11 +1,6 @@
 import CoreData
 import UIKit
 
-/// A window that presents a minimal debug menu on a shake gesture.
-///
-/// Installed by `SceneDelegate` only when `DebugMenuConfiguration.isEnabled` is
-/// true (Stage builds); the flag is re-checked on every shake so a build with
-/// `ENABLE_DEBUG_MENU = NO` never reacts to the gesture.
 final class DebugMenuWindow: UIWindow {
     private let configuration: DebugMenuConfiguration
 
@@ -31,8 +26,6 @@ final class DebugMenuWindow: UIWindow {
 
 private extension DebugMenuWindow {
     var apiBaseURL: String {
-        // Same Info.plist key NetworkConfiguration.fromInfoPlist reads, so the
-        // menu shows exactly the host the app resolves at runtime.
         Bundle.main.object(forInfoDictionaryKey: "APIBaseURL") as? String ?? "indisponível"
     }
 
@@ -73,8 +66,6 @@ private extension DebugMenuWindow {
         var failures: [String] = []
 
         if let bundleIdentifier = Bundle.main.bundleIdentifier {
-            // UserDefaultsStore uses UserDefaults.standard, whose persistent
-            // domain is the main bundle identifier.
             UserDefaults.standard.removePersistentDomain(forName: bundleIdentifier)
             cleared.append("UserDefaults (onboarding e preferências)")
         } else {
@@ -87,7 +78,6 @@ private extension DebugMenuWindow {
     }
 
     func clearRecipeImages(cleared: inout [String], failures: inout [String]) {
-        // Same location RecipeImageStore uses: Documents/RecipeImages.
         let fileManager = FileManager.default
         guard let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else {
             failures.append("Imagens de receitas")
@@ -109,8 +99,6 @@ private extension DebugMenuWindow {
     }
 
     func clearSavedRecipesDatabase(cleared: inout [String], failures: inout [String]) {
-        // SavedRecipeStoreBuilder loads NSPersistentContainer(name: "SavedRecipes")
-        // at the default store location (Library/Application Support).
         let fileManager = FileManager.default
         let storeURL = NSPersistentContainer.defaultDirectoryURL()
             .appendingPathComponent("SavedRecipes.sqlite")

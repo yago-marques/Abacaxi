@@ -60,9 +60,6 @@ final class MockURLProtocol: URLProtocol {
     override func startLoading() {
         MockURLProtocol.lastRequest = request
         guard let handler = MockURLProtocol.handler else {
-            // A previous test's (already-cancelled) request can have its startLoading
-            // dispatched late by the URL loading system, landing here after that test's
-            // tearDown reset the handler. Fail it quietly instead of crashing the process.
             client?.urlProtocol(self, didFailWithError: URLError(.cancelled))
             return
         }

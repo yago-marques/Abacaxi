@@ -17,8 +17,6 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         self.appCoordinator = appCoordinator
 
         let window = makeWindow(windowScene: windowScene)
-        // The Design System palette is intentionally dark-branded; forcing dark keeps
-        // system surfaces (status bar, keyboards, sheets) consistent in light mode.
         window.overrideUserInterfaceStyle = .dark
         window.rootViewController = appCoordinator.navigationController
         window.makeKeyAndVisible()

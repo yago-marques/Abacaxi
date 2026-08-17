@@ -48,8 +48,6 @@ final class RecipeCoordinator: CoordinatorProtocol {
             onFinish: { [weak navigationController = navigationController] in
                 navigationController?.popViewController(animated: true)
             },
-            // Fires on both programmatic finish (after the pop above) and
-            // interactive swipe-back, so the parent can release this coordinator.
             onDismiss: { [weak self] in
                 self?.onFinish()
             }

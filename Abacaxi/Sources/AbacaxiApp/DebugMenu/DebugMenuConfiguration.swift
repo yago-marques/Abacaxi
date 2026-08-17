@@ -1,9 +1,5 @@
 import Foundation
 
-/// Reads the debug menu flag injected by the build configuration.
-///
-/// `ENABLE_DEBUG_MENU` flows from `Configs/Environments/*.xcconfig` into the
-/// `AbacaxiDebugMenuEnabled` Info.plist entry (`YES` on Stage, `NO` on Production).
 struct DebugMenuConfiguration {
     private static let infoPlistKey = "AbacaxiDebugMenuEnabled"
 

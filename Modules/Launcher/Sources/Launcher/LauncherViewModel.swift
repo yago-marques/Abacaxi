@@ -24,13 +24,13 @@ public final class LauncherViewModel: LauncherViewModelProtocol {
     }
 
     public func checkDeviceID() {
-        do {
-            if try getDeviceIDUseCase.execute() == nil {
-                try createDeviceIDUseCase.execute()
-            }
-        } catch {
-            // Swallowed: DeviceID resolution must never block the Launcher → Home transition.
-        }
+        try? createDeviceIDIfMissing()
         coordinator?.handle(LauncherAction.closeLauncher)
+    }
+
+    private func createDeviceIDIfMissing() throws {
+        if try getDeviceIDUseCase.execute() == nil {
+            try createDeviceIDUseCase.execute()
+        }
     }
 }

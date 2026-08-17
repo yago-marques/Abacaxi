@@ -35,8 +35,6 @@ final class URLSessionHTTPClientTests: XCTestCase {
         return URLSessionHTTPClient(configuration: configuration, session: MockURLProtocol.makeSession())
     }
 
-    // MARK: - HTTP methods
-
     func test_send_defaultEndpoint_usesGET() throws {
         let sut = try makeSUT()
         MockURLProtocol.handler = { _ in .init(statusCode: 200, data: Data("{}".utf8)) }
@@ -79,8 +77,6 @@ final class URLSessionHTTPClientTests: XCTestCase {
         XCTAssertEqual(MockURLProtocol.lastRequest?.url?.host, "auth.example.com")
     }
 
-    // MARK: - Decoding
-
     func test_send_async_decodesSuccessfulResponse() async throws {
         let sut = try makeSUT()
         let account = Account(id: "1", name: "Ana")
@@ -108,8 +104,6 @@ final class URLSessionHTTPClientTests: XCTestCase {
 
         XCTAssertEqual(received, account)
     }
-
-    // MARK: - Error mapping
 
     func test_send_non2xxStatus_mapsToStatusCodeError() async throws {
         let sut = try makeSUT()
@@ -148,13 +142,10 @@ final class URLSessionHTTPClientTests: XCTestCase {
             let _: Account = try await sut.send(TestEndpoint(path: "/accounts/1"))
             XCTFail("expected NetworkError.decoding")
         } catch NetworkError.decoding {
-            // expected
         } catch {
             XCTFail("expected NetworkError.decoding, got \(error)")
         }
     }
-
-    // MARK: - Parity between call styles
 
     func test_send_asyncAndCompletionHandler_produceEquivalentResults() async throws {
         let sut = try makeSUT()
@@ -174,8 +165,6 @@ final class URLSessionHTTPClientTests: XCTestCase {
 
         XCTAssertEqual(asyncResult, completionResult)
     }
-
-    // MARK: - Cancellation
 
     func test_cancel_completionHandler_completesWithCancelledError() throws {
         let sut = try makeSUT()

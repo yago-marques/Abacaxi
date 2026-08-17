@@ -1,9 +1,6 @@
 import Foundation
 import NetworkInterfaces
 
-/// `URLSession`-backed `HTTPClientProtocol`. Both call styles share the same request-building
-/// (`makeURLRequest`) and response-mapping (`mapResult`/`decode`) logic; they differ only
-/// in which `URLSession` API they call to actually perform the transfer.
 public final class URLSessionHTTPClient: HTTPClientProtocol {
     private let session: URLSession
     private let configuration: NetworkConfiguration
@@ -30,8 +27,6 @@ public final class URLSessionHTTPClient: HTTPClientProtocol {
         let data: Data
         let response: URLResponse
         do {
-            // `URLSession.data(for:)` cancels its underlying task and propagates Task
-            // cancellation on its own — no manual continuation/cancellable plumbing needed.
             (data, response) = try await session.data(for: urlRequest)
         } catch {
             logger.logResponse(nil, data: nil, error: error)
