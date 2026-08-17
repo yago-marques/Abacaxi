@@ -8,42 +8,21 @@ import XCTest
 // Se estes testes quebrarem, receitas já salvas pelos usuários ficam ilegíveis.
 final class SavedRecipePersistentDTOTests: XCTestCase {
     func test_decode_legacyIngredientsPayload_mapsToBusinessModels() throws {
-        let legacyPayload = Data("""
-        [{"name":"Arroz","quantity":"1 xícara"},{"name":"Feijão","quantity":"2 conchas"}]
-        """.utf8)
+        let sut = try makeDecodedIngredientsSUT()
 
-        let decoded = try JSONDecoder().decode([RecipeIngredientPersistentDTO].self, from: legacyPayload)
-        let ingredients = decoded.map(RecipeIngredientDetailBusinessModel.init)
-
-        XCTAssertEqual(
-            ingredients,
-            [
-                RecipeIngredientDetailBusinessModel(name: "Arroz", quantity: "1 xícara"),
-                RecipeIngredientDetailBusinessModel(name: "Feijão", quantity: "2 conchas")
-            ]
-        )
+        XCTAssertEqual(sut.map(RecipeIngredientDetailBusinessModel.init), expectedIngredients)
     }
 
     func test_decode_legacyNutritionPayload_mapsToBusinessModel() throws {
-        let legacyPayload = Data("""
-        {"calories":450,"proteinGrams":12,"carbsGrams":60,"fatGrams":10}
-        """.utf8)
+        let sut = try makeDecodedNutritionSUT()
 
-        let decoded = try JSONDecoder().decode(RecipeNutritionPersistentDTO.self, from: legacyPayload)
-        let nutrition = RecipeNutritionBusinessModel(decoded)
-
-        XCTAssertEqual(
-            nutrition,
-            RecipeNutritionBusinessModel(calories: 450, proteinGrams: 12, carbsGrams: 60, fatGrams: 10)
-        )
+        XCTAssertEqual(RecipeNutritionBusinessModel(sut), expectedNutrition)
     }
 
     func test_encode_ingredientDTO_writesTheLegacyKeys() throws {
-        let ingredient = RecipeIngredientDetailBusinessModel(name: "Arroz", quantity: "1 xícara")
-        let dto = RecipeIngredientPersistentDTO(ingredient)
+        let sut = makeIngredientSUT()
 
-        let encoded = try JSONEncoder().encode(dto)
-        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
+        let json = try encodeToJSONObject(sut)
 
         XCTAssertEqual(Set(json.keys), ["name", "quantity"])
         XCTAssertEqual(json["name"] as? String, "Arroz")
@@ -51,17 +30,60 @@ final class SavedRecipePersistentDTOTests: XCTestCase {
     }
 
     func test_encode_nutritionDTO_writesTheLegacyKeys() throws {
-        let dto = RecipeNutritionPersistentDTO(
-            RecipeNutritionBusinessModel(calories: 450, proteinGrams: 12, carbsGrams: 60, fatGrams: 10)
-        )
+        let sut = makeNutritionSUT()
 
-        let encoded = try JSONEncoder().encode(dto)
-        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
+        let json = try encodeToJSONObject(sut)
 
         XCTAssertEqual(Set(json.keys), ["calories", "proteinGrams", "carbsGrams", "fatGrams"])
         XCTAssertEqual(json["calories"] as? Int, 450)
         XCTAssertEqual(json["proteinGrams"] as? Int, 12)
         XCTAssertEqual(json["carbsGrams"] as? Int, 60)
         XCTAssertEqual(json["fatGrams"] as? Int, 10)
+    }
+}
+
+private extension SavedRecipePersistentDTOTests {
+    var legacyIngredientsPayload: Data {
+        Data("""
+        [{"name":"Arroz","quantity":"1 xícara"},{"name":"Feijão","quantity":"2 conchas"}]
+        """.utf8)
+    }
+
+    var legacyNutritionPayload: Data {
+        Data("""
+        {"calories":450,"proteinGrams":12,"carbsGrams":60,"fatGrams":10}
+        """.utf8)
+    }
+
+    var expectedIngredients: [RecipeIngredientDetailBusinessModel] {
+        [
+            RecipeIngredientDetailBusinessModel(name: "Arroz", quantity: "1 xícara"),
+            RecipeIngredientDetailBusinessModel(name: "Feijão", quantity: "2 conchas")
+        ]
+    }
+
+    var expectedNutrition: RecipeNutritionBusinessModel {
+        RecipeNutritionBusinessModel(calories: 450, proteinGrams: 12, carbsGrams: 60, fatGrams: 10)
+    }
+
+    func makeDecodedIngredientsSUT() throws -> [RecipeIngredientPersistentDTO] {
+        try JSONDecoder().decode([RecipeIngredientPersistentDTO].self, from: legacyIngredientsPayload)
+    }
+
+    func makeDecodedNutritionSUT() throws -> RecipeNutritionPersistentDTO {
+        try JSONDecoder().decode(RecipeNutritionPersistentDTO.self, from: legacyNutritionPayload)
+    }
+
+    func makeIngredientSUT() -> RecipeIngredientPersistentDTO {
+        RecipeIngredientPersistentDTO(expectedIngredients[0])
+    }
+
+    func makeNutritionSUT() -> RecipeNutritionPersistentDTO {
+        RecipeNutritionPersistentDTO(expectedNutrition)
+    }
+
+    func encodeToJSONObject(_ value: some Encodable) throws -> [String: Any] {
+        let encoded = try JSONEncoder().encode(value)
+        return try XCTUnwrap(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
     }
 }
