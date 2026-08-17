@@ -83,11 +83,11 @@ private extension SavedRecipePersistentModel {
         id = recipe.id.uuidString
         title = recipe.title
         recipeDescription = recipe.description
-        ingredientsData = try JSONEncoder().encode(recipe.ingredients)
+        ingredientsData = try JSONEncoder().encode(recipe.ingredients.map(RecipeIngredientPersistentDTO.init))
         stepsData = try JSONEncoder().encode(recipe.steps)
         preparationTimeMinutes = recipe.preparationTimeMinutes
         servings = recipe.servings
-        nutritionData = try recipe.nutrition.map(JSONEncoder().encode)
+        nutritionData = try recipe.nutrition.map { try JSONEncoder().encode(RecipeNutritionPersistentDTO($0)) }
         imagePath = try recipe.imageData.map { try imageStore.save($0, named: recipe.id.uuidString) }
         createdAt = Date()
     }
@@ -104,14 +104,14 @@ private extension RecipeBusinessModel {
             title: model.title,
             description: model.recipeDescription,
             ingredients: try JSONDecoder().decode(
-                [RecipeIngredientDetailBusinessModel].self,
+                [RecipeIngredientPersistentDTO].self,
                 from: model.ingredientsData
-            ),
+            ).map(RecipeIngredientDetailBusinessModel.init),
             steps: try JSONDecoder().decode([String].self, from: model.stepsData),
             preparationTimeMinutes: model.preparationTimeMinutes,
             servings: model.servings,
             nutrition: try model.nutritionData.map {
-                try JSONDecoder().decode(RecipeNutritionBusinessModel.self, from: $0)
+                RecipeNutritionBusinessModel(try JSONDecoder().decode(RecipeNutritionPersistentDTO.self, from: $0))
             },
             imageData: try model.imagePath.flatMap { try imageStore.load(named: $0) }
         )
