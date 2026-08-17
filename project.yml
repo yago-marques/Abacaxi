@@ -34,6 +34,9 @@ packages:
     path: Modules/Extensions
   Recipe:
     path: Modules/Recipe
+  SnapshotTesting:
+    url: https://github.com/pointfreeco/swift-snapshot-testing
+    exactVersion: 1.19.4
 
 targetTemplates:
   AbacaxiAppTarget:
@@ -105,7 +108,7 @@ targets:
   DesignSystemTests:
     templates: [ModuleUnitTests]
     sources: [{path: Modules/DesignSystem/Tests, name: DesignSystemTests, group: Test Targets, createIntermediateGroups: false}]
-    dependencies: [{package: DesignSystem}]
+    dependencies: [{package: DesignSystem}, {package: SnapshotTesting, product: SnapshotTesting}]
 
   DomainTests:
     templates: [ModuleUnitTests]

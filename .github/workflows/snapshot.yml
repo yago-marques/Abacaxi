@@ -1,0 +1,113 @@
+# Regressão visual do DesignSystem.
+#
+# Ambiente canônico dos snapshots: iPhone 16 / iOS 18.5 / Xcode 16.4 (pinados
+# abaixo). Os testes só executam de verdade com SNAPSHOT_TESTS=1 — em qualquer
+# outra suíte (AllTests, test-impacted, hook local) eles dão skip, então este
+# workflow é o único lugar onde snapshots falham ou são gravados.
+#
+# Bootstrap: enquanto nenhuma __Snapshots__/ estiver commitada, runs de PR
+# pulam a comparação com um aviso (workflow_dispatch exige o arquivo na branch
+# default, então o primeiro record só é possível após o merge deste workflow).
+#
+# Para (re)gravar referências:
+#   1. Actions → Snapshot Tests → Run workflow, escolha a branch, record=all
+#      (ou record=missing para gravar só as que faltam)
+#   2. Baixe o artifact "ds-snapshot-references"
+#   3. Na raiz do repo: tar -xzf ds-snapshot-references.tgz
+#   4. Commite as pastas __Snapshots__/ resultantes
+name: Snapshot Tests
+
+on:
+  pull_request:
+    paths:
+      - "Modules/DesignSystem/**"
+      - ".github/workflows/snapshot.yml"
+      - "project.yml"
+      - "Makefile"
+  workflow_dispatch:
+    inputs:
+      record:
+        description: "Modo de gravação das referências"
+        type: choice
+        options: ["never", "missing", "all"]
+        default: "never"
+
+concurrency:
+  group: snapshot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  snapshot:
+    name: DS Snapshots
+    runs-on: macos-15
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for committed references
+        id: refs
+        run: |
+          if find Modules/DesignSystem/Tests -type d -name __Snapshots__ | grep -q .; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Nenhuma __Snapshots__/ commitada ainda — comparação pulada (bootstrap). Grave via workflow_dispatch record=all após o merge."
+          fi
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        if: github.event_name == 'workflow_dispatch' || steps.refs.outputs.found == 'true'
+        with:
+          xcode-version: "16.4"
+
+      - name: Install tooling
+        if: github.event_name == 'workflow_dispatch' || steps.refs.outputs.found == 'true'
+        run: brew install xcodegen swiftgen
+
+      - name: Bootstrap
+        if: github.event_name == 'workflow_dispatch' || steps.refs.outputs.found == 'true'
+        run: make bootstrap
+
+      - name: Generate localizations
+        if: github.event_name == 'workflow_dispatch' || steps.refs.outputs.found == 'true'
+        run: make generate-localizations
+
+      - name: Generate project
+        if: github.event_name == 'workflow_dispatch' || steps.refs.outputs.found == 'true'
+        run: make generate
+
+      - name: Run snapshot tests
+        if: github.event_name == 'workflow_dispatch' || steps.refs.outputs.found == 'true'
+        env:
+          TEST_RUNNER_SNAPSHOT_TESTS: "1"
+          TEST_RUNNER_SNAPSHOT_TESTING_RECORD: ${{ inputs.record || 'never' }}
+          TEST_RUNNER_SNAPSHOT_ARTIFACTS: ${{ github.workspace }}/build/snapshot-failures
+        run: |
+          make test \
+            TEST_SCHEME=DesignSystemTests \
+            TEST_DESTINATION='platform=iOS Simulator,name=iPhone 16,OS=18.5'
+
+      # tar preserva os caminhos completos a partir da raiz do repo — o
+      # upload-artifact sozinho corta tudo antes do primeiro wildcard.
+      - name: Package recorded references
+        if: always() && github.event_name == 'workflow_dispatch' && inputs.record != 'never'
+        run: |
+          find Modules/DesignSystem/Tests -type d -name __Snapshots__ -print0 \
+            | xargs -0 tar -czf ds-snapshot-references.tgz
+
+      - name: Upload recorded references
+        if: always() && github.event_name == 'workflow_dispatch' && inputs.record != 'never'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ds-snapshot-references
+          path: ds-snapshot-references.tgz
+          if-no-files-found: error
+
+      - name: Upload failure diffs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ds-snapshot-failures
+          path: build/snapshot-failures/
+          if-no-files-found: ignore
