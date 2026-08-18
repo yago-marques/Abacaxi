@@ -5,7 +5,7 @@ public enum DSColor {
     public static let background = UIColor(red: 0.10, green: 0.10, blue: 0.10, alpha: 1)
     public static let surface = UIColor(red: 0.14, green: 0.14, blue: 0.14, alpha: 1)
     public static let surfaceLight = UIColor(red: 0.96, green: 0.95, blue: 0.91, alpha: 1)
-    public static let primary = UIColor(red: 1, green: 0.78, blue: 0.24, alpha: 1)
+    public static let primary = UIColor(red: 1, green: 0.72, blue: 0.18, alpha: 1)
     public static let accent = UIColor(red: 0.25, green: 0.68, blue: 0.45, alpha: 1)
     public static let error = UIColor(red: 0.82, green: 0.24, blue: 0.22, alpha: 1)
     public static let brown = UIColor(red: 0.42, green: 0.26, blue: 0.16, alpha: 1)
