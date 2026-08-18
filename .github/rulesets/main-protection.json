@@ -28,7 +28,8 @@
       "parameters": {
         "strict_required_status_checks_policy": false,
         "required_status_checks": [
-          { "context": "Build and Test" }
+          { "context": "Build and Test" },
+          { "context": "DS Snapshots" }
         ]
       }
     }
