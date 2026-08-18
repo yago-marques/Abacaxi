@@ -5,6 +5,12 @@
 # outra suíte (AllTests, test-impacted, hook local) eles dão skip, então este
 # workflow é o único lugar onde snapshots falham ou são gravados.
 #
+# O check requerido pelo ruleset da main é o job "DS Snapshots" (verdict), que
+# reporta em TODO PR: required checks não convivem com filtro de paths (PRs
+# fora do escopo travariam em "Expected"), então um gate barato em ubuntu
+# detecta se o PR toca o DS — quando não toca, o veredito aprova sem subir
+# runner macOS.
+#
 # Para (re)gravar referências, use Scripts/record-snapshots.sh (automatiza o
 # ciclo inteiro) ou manualmente:
 #   - push da sua branch para uma branch record/* (funciona antes do merge):
@@ -20,11 +26,6 @@ name: Snapshot Tests
 
 on:
   pull_request:
-    paths:
-      - "Modules/DesignSystem/**"
-      - ".github/workflows/snapshot.yml"
-      - "project.yml"
-      - "Makefile"
   push:
     branches: ["record/**"]
   workflow_dispatch:
@@ -40,8 +41,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Detect DS changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      ds: ${{ steps.diff.outputs.ds }}
+    steps:
+      # fetch-depth 2 traz o merge commit do PR e seus dois pais; o diff
+      # contra HEAD^1 (tip da base) lista exatamente os arquivos do PR.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - id: diff
+        run: |
+          if git diff --name-only HEAD^1 HEAD \
+            | grep -qE '^(Modules/DesignSystem/|project\.yml$|Makefile$|\.github/workflows/snapshot\.yml$)'; then
+            echo "ds=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ds=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::PR não toca o DesignSystem — comparação de snapshots dispensada."
+          fi
+
   snapshot:
-    name: DS Snapshots
+    name: Render and compare
+    needs: changes
+    if: always() && (github.event_name != 'pull_request' || needs.changes.outputs.ds == 'true')
     runs-on: macos-15
     timeout-minutes: 30
     permissions:
@@ -123,3 +148,23 @@ jobs:
           name: ds-snapshot-failures
           path: build/snapshot-failures/
           if-no-files-found: ignore
+
+  # Check requerido pelo ruleset da main: reporta em todo PR.
+  # Passa quando o snapshot passou OU foi legitimamente dispensado (PR fora
+  # do DS); falha se a comparação falhou ou se o gate não pôde decidir.
+  verdict:
+    name: DS Snapshots
+    needs: [changes, snapshot]
+    if: always() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decide
+        run: |
+          if [ "${{ needs.changes.result }}" != "success" ]; then
+            echo "Gate de mudanças não concluiu (${{ needs.changes.result }})."
+            exit 1
+          fi
+          case "${{ needs.snapshot.result }}" in
+            success|skipped) echo "OK (snapshot: ${{ needs.snapshot.result }})";;
+            *) echo "Snapshots falharam (${{ needs.snapshot.result }})."; exit 1;;
+          esac
