@@ -113,6 +113,17 @@ struct RecipeFlowViewModelTests {
         #expect(sut.path.isEmpty)
     }
 
+    @Test func openSavedRecipe_whileLoading_ignoresNewRequests() async {
+        let (sut, doubles) = makeSUTAndDoubles(entryPoint: .myRecipes)
+
+        sut.openSavedRecipe(id: "saved-id")
+        let task = sut.savedRecipeLoadTask
+        sut.openSavedRecipe(id: "saved-id")
+        await task?.value
+
+        #expect(doubles.getSavedRecipeUseCase.receivedIDs == ["saved-id"])
+    }
+
     @Test func finishFlow_callsTheFlowCompletion() {
         var didFinish = false
         let (sut, _) = makeSUTAndDoubles(onFinish: { didFinish = true })

@@ -2,17 +2,21 @@ import DomainInterfaces
 
 final class GetSavedRecipesUseCaseStub: GetSavedRecipesUseCaseProtocol {
     var stubbedResult: Result<[SavedRecipeBusinessModel], Error> = .success([])
+    private(set) var executeCount = 0
 
     func execute() async throws -> [SavedRecipeBusinessModel] {
-        try stubbedResult.get()
+        executeCount += 1
+        return try stubbedResult.get()
     }
 }
 
 final class GetSavedRecipeUseCaseStub: GetSavedRecipeUseCaseProtocol {
     var stubbedResult: Result<RecipeBusinessModel?, Error> = .success(nil)
+    private(set) var receivedIDs: [String] = []
 
     func execute(id: String) async throws -> RecipeBusinessModel? {
-        try stubbedResult.get()
+        receivedIDs.append(id)
+        return try stubbedResult.get()
     }
 }
 

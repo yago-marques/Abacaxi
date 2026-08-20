@@ -55,10 +55,8 @@ final class RecipeResultViewModel: ObservableObject {
                 try await saveRecipeUseCase.execute(recipe: recipe)
                 guard !Task.isCancelled else { return }
                 isSaved = true
-            } catch is CancellationError {
-                // The view model is going away or the action was superseded.
             } catch {
-                guard !Task.isCancelled else { return }
+                guard !Task.isCancelled, !(error is CancellationError) else { return }
                 didFailSaving = true
             }
         }
@@ -81,10 +79,8 @@ final class RecipeResultViewModel: ObservableObject {
                 try await removeSavedRecipeUseCase.execute(id: id)
                 guard !Task.isCancelled else { return }
                 didRemove = true
-            } catch is CancellationError {
-                // The view model is going away or the action was superseded.
             } catch {
-                guard !Task.isCancelled else { return }
+                guard !Task.isCancelled, !(error is CancellationError) else { return }
                 didFailRemoving = true
             }
         }

@@ -101,10 +101,8 @@ final class RecipeFlowViewModel: ObservableObject {
             do {
                 guard let recipe = try await getSavedRecipeUseCase.execute(id: id), !Task.isCancelled else { return }
                 showSavedRecipe(recipe, id: id)
-            } catch is CancellationError {
-                // The view model is going away or the request was superseded.
             } catch {
-                guard !Task.isCancelled else { return }
+                guard !Task.isCancelled, !(error is CancellationError) else { return }
                 feedback = RecipeFlowFeedback(kind: .savedRecipeUnavailable)
             }
         }

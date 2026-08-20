@@ -37,10 +37,8 @@ final class SavedRecipesViewModel: ObservableObject {
                 let recipes = savedRecipes.map(SavedRecipePresentationModel.init)
                 guard !Task.isCancelled else { return }
                 state = recipes.isEmpty ? .empty : .content(recipes)
-            } catch is CancellationError {
-                // The view model is going away or the request was superseded.
             } catch {
-                guard !Task.isCancelled else { return }
+                guard !Task.isCancelled, !(error is CancellationError) else { return }
                 state = .error
             }
         }

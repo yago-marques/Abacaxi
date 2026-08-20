@@ -38,6 +38,18 @@ struct SavedRecipesViewModelTests {
         #expect(sut.state == .error)
     }
 
+    @Test func load_whileLoading_ignoresNewRequests() async {
+        let useCase = GetSavedRecipesUseCaseStub()
+        let sut = SavedRecipesViewModel(getSavedRecipesUseCase: useCase)
+
+        sut.load()
+        let task = sut.loadTask
+        sut.load()
+        await task?.value
+
+        #expect(useCase.executeCount == 1)
+    }
+
     private var recipe: SavedRecipeBusinessModel {
         SavedRecipeBusinessModel(
             id: "1",

@@ -84,6 +84,17 @@ struct RecipeResultViewModelTests {
 
         #expect(sut.didFailRemoving)
     }
+
+    @Test func remove_whileRemoving_ignoresNewRequests() async {
+        let (sut, doubles) = makeSUTAndDoubles()
+
+        sut.remove(id: "saved-recipe")
+        let task = sut.removeTask
+        sut.remove(id: "saved-recipe")
+        await task?.value
+
+        #expect(doubles.removeUseCase.receivedIDs == ["saved-recipe"])
+    }
 }
 
 private extension RecipeResultViewModelTests {
