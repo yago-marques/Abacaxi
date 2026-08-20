@@ -43,6 +43,21 @@ struct QuestionStepperViewModelTests {
         #expect(sut.isCompleted)
     }
 
+    @Test func continueStep_onLastQuestion_trimsCustomAnswers() {
+        var receivedAnswers: [RecipeAnswerBusinessModel] = []
+        let sut = QuestionStepperViewModel(
+            questions: [questions[0]],
+            onBack: {},
+            onComplete: { receivedAnswers = $0 }
+        )
+        sut.selectCustomAnswer()
+        sut.customAnswer = "  Comida vegana  "
+
+        sut.continueStep()
+
+        #expect(receivedAnswers == [.init(questionID: "type", value: "Comida vegana")])
+    }
+
     @Test func goBack_onFirstQuestion_finishesFlow() {
         var didRequestBack = false
         let sut = QuestionStepperViewModel(
