@@ -32,6 +32,7 @@ where Store.Entity == SavedRecipePersistentModel {
                 try await persistentStore.save(model)
             } catch {
                 if let imagePath = model.imagePath {
+                    // Best effort: preserve the original persistence error.
                     try? await imageStore.delete(named: imagePath)
                 }
                 throw error

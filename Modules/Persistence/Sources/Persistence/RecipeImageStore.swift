@@ -5,7 +5,7 @@ public enum RecipeImageStoreError: Error {
     case documentsDirectoryUnavailable
 }
 
-public final class RecipeImageStore: RecipeImageStoringProtocol {
+public actor RecipeImageStore: RecipeImageStoringProtocol {
     private let fileManager: FileManager
     private let directoryURL: URL
 

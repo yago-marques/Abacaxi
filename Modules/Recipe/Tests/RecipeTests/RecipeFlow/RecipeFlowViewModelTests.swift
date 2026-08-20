@@ -124,6 +124,21 @@ struct RecipeFlowViewModelTests {
         #expect(doubles.getSavedRecipeUseCase.receivedIDs == ["saved-id"])
     }
 
+    @Test func cancelSavedRecipeLoad_resetsStateWithoutFeedback() async {
+        let (sut, doubles) = makeSUTAndDoubles(entryPoint: .myRecipes)
+        doubles.getSavedRecipeUseCase.delayNanoseconds = 1_000_000_000
+
+        sut.openSavedRecipe(id: "saved-id")
+        let task = sut.savedRecipeLoadTask
+        sut.cancelSavedRecipeLoad()
+        await task?.value
+
+        #expect(sut.savedRecipeLoadTask == nil)
+        #expect(sut.feedback == nil)
+        #expect(sut.recipe == nil)
+        #expect(sut.path.isEmpty)
+    }
+
     @Test func finishFlow_callsTheFlowCompletion() {
         var didFinish = false
         let (sut, _) = makeSUTAndDoubles(onFinish: { didFinish = true })
