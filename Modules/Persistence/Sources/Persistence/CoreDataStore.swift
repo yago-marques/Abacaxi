@@ -31,7 +31,8 @@ public final class CoreDataStore<
 
     public func save(_ entity: Entity) async throws {
         try await perform { context in
-            let managedObject = try self.fetchManagedObject(id: entity.id, in: context) ?? (try self.insertManagedObject(in: context))
+            let managedObject = try self.fetchManagedObject(id: entity.id, in: context)
+                ?? (try self.insertManagedObject(in: context))
             self.map(entity, managedObject)
             try context.save()
         }
