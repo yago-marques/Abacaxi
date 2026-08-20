@@ -1,7 +1,7 @@
 import Foundation
 import PersistenceInterfaces
 
-public struct SavedRecipePersistentModel: PersistentEntityProtocol, Equatable {
+public struct SavedRecipePersistentModel: PersistentEntityProtocol, Equatable, Sendable {
     public let id: String
     public let title: String
     public let recipeDescription: String

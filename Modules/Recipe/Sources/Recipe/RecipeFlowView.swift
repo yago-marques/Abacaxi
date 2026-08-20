@@ -81,6 +81,7 @@ struct RecipeFlowView: View {
         }
         .onDisappear {
             viewModel.cancelGeneration()
+            viewModel.cancelSavedRecipeLoad()
             onDismiss()
         }
     }

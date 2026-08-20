@@ -4,11 +4,13 @@ import Testing
 
 @MainActor
 struct RecipeResultViewModelTests {
-    @Test func save_whenUseCaseSucceeds_marksSavedAndForwardsRecipe() {
+    @Test func save_whenUseCaseSucceeds_marksSavedAndForwardsRecipe() async {
         let recipe = makeRecipe()
         let (sut, doubles) = makeSUTAndDoubles(recipe: recipe)
 
         sut.save()
+        let task = sut.saveTask
+        await task?.value
 
         #expect(sut.isSaved)
         #expect(!sut.isSaving)
@@ -16,11 +18,13 @@ struct RecipeResultViewModelTests {
         #expect(doubles.saveUseCase.receivedRecipes == [recipe])
     }
 
-    @Test func save_whenUseCaseFails_exposesFailureAndAllowsRetry() {
+    @Test func save_whenUseCaseFails_exposesFailureAndAllowsRetry() async {
         let (sut, doubles) = makeSUTAndDoubles()
         doubles.saveUseCase.stubbedResult = .failure(StubError.failure)
 
         sut.save()
+        let failedTask = sut.saveTask
+        await failedTask?.value
 
         #expect(sut.didFailSaving)
         #expect(!sut.isSaved)
@@ -28,45 +32,57 @@ struct RecipeResultViewModelTests {
 
         doubles.saveUseCase.stubbedResult = .success(())
         sut.save()
+        let retryTask = sut.saveTask
+        await retryTask?.value
 
         #expect(sut.isSaved)
         #expect(!sut.didFailSaving)
         #expect(doubles.saveUseCase.receivedRecipes.count == 2)
     }
 
-    @Test func save_whenAlreadySaved_ignoresNewRequests() {
+    @Test func save_whenAlreadySaved_ignoresNewRequests() async {
         let (sut, doubles) = makeSUTAndDoubles()
 
         sut.save()
+        let task = sut.saveTask
         sut.save()
+        await task?.value
 
         #expect(doubles.saveUseCase.receivedRecipes.count == 1)
     }
 
-    @Test func saveTitle_reflectsSaveState() {
+    @Test func saveTitle_reflectsSaveState() async {
         let (sut, _) = makeSUTAndDoubles()
 
         #expect(sut.saveTitle == L10n.RecipeResult.save)
 
         sut.save()
+        let task = sut.saveTask
+        await task?.value
 
         #expect(sut.saveTitle == L10n.RecipeResult.saved)
     }
 
-    @Test func remove_whenUseCaseSucceeds_returnsTrueAndUsesRecipeID() {
+    @Test func remove_whenUseCaseSucceeds_marksRemovedAndUsesRecipeID() async {
         let (sut, doubles) = makeSUTAndDoubles()
 
-        let didRemove = sut.remove(id: "saved-recipe")
+        sut.remove(id: "saved-recipe")
+        let task = sut.removeTask
+        await task?.value
 
-        #expect(didRemove)
+        #expect(sut.didRemove)
         #expect(doubles.removeUseCase.receivedIDs == ["saved-recipe"])
     }
 
-    @Test func remove_whenUseCaseFails_returnsFalse() {
+    @Test func remove_whenUseCaseFails_exposesFailure() async {
         let (sut, doubles) = makeSUTAndDoubles()
         doubles.removeUseCase.stubbedResult = .failure(RemoveSavedRecipeError.persistenceFailed)
 
-        #expect(!sut.remove(id: "saved-recipe"))
+        sut.remove(id: "saved-recipe")
+        let task = sut.removeTask
+        await task?.value
+
+        #expect(sut.didFailRemoving)
     }
 }
 

@@ -18,20 +18,20 @@ public final class RecipeImageStore: RecipeImageStoringProtocol {
         try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
     }
 
-    public func save(_ data: Data, named name: String) throws -> String {
+    public func save(_ data: Data, named name: String) async throws -> String {
         let fileName = "\(name).png"
         let fileURL = directoryURL.appendingPathComponent(fileName)
         try data.write(to: fileURL, options: .atomic)
         return fileName
     }
 
-    public func load(named name: String) throws -> Data? {
+    public func load(named name: String) async throws -> Data? {
         let fileURL = directoryURL.appendingPathComponent(name)
         guard fileManager.fileExists(atPath: fileURL.path) else { return nil }
         return try Data(contentsOf: fileURL)
     }
 
-    public func delete(named name: String) throws {
+    public func delete(named name: String) async throws {
         let fileURL = directoryURL.appendingPathComponent(name)
         guard fileManager.fileExists(atPath: fileURL.path) else { return }
 

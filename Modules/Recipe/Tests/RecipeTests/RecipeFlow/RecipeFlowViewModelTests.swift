@@ -89,21 +89,25 @@ struct RecipeFlowViewModelTests {
         #expect(doubles.generateRecipeUseCase.receivedAnswers.count == 1)
     }
 
-    @Test func openSavedRecipe_whenRecipeExists_showsSavedResult() throws {
+    @Test func openSavedRecipe_whenRecipeExists_showsSavedResult() async {
         let (sut, doubles) = makeSUTAndDoubles(entryPoint: .myRecipes)
         doubles.getSavedRecipeUseCase.stubbedResult = .success(recipe)
 
         sut.openSavedRecipe(id: "saved-id")
+        let task = sut.savedRecipeLoadTask
+        await task?.value
 
         #expect(sut.resultContext == .saved(id: "saved-id"))
         #expect(sut.path == [.result])
     }
 
-    @Test func openSavedRecipe_whenUseCaseFails_emitsSavedRecipeUnavailableFeedback() {
+    @Test func openSavedRecipe_whenUseCaseFails_emitsSavedRecipeUnavailableFeedback() async {
         let (sut, doubles) = makeSUTAndDoubles(entryPoint: .myRecipes)
         doubles.getSavedRecipeUseCase.stubbedResult = .failure(StubError.failure)
 
         sut.openSavedRecipe(id: "saved-id")
+        let task = sut.savedRecipeLoadTask
+        await task?.value
 
         #expect(sut.feedback?.kind == .savedRecipeUnavailable)
         #expect(sut.path.isEmpty)

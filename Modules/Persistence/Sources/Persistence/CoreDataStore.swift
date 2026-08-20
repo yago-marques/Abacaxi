@@ -29,27 +29,47 @@ public final class CoreDataStore<
         self.toEntity = toEntity
     }
 
-    public func save(_ entity: Entity) throws {
-        let context = container.viewContext
-        let managedObject = try fetchManagedObject(id: entity.id, in: context) ?? (try insertManagedObject(in: context))
-        map(entity, managedObject)
-        try context.save()
+    public func save(_ entity: Entity) async throws {
+        try await perform { context in
+            let managedObject = try self.fetchManagedObject(id: entity.id, in: context) ?? (try self.insertManagedObject(in: context))
+            self.map(entity, managedObject)
+            try context.save()
+        }
     }
 
-    public func fetch(id: Entity.ID) throws -> Entity? {
-        try fetchManagedObject(id: id, in: container.viewContext).map(toEntity)
+    public func fetch(id: Entity.ID) async throws -> Entity? {
+        try await perform { context in
+            try self.fetchManagedObject(id: id, in: context).map(self.toEntity)
+        }
     }
 
-    public func fetchAll() throws -> [Entity] {
-        let request = NSFetchRequest<ManagedObject>(entityName: entityName)
-        return try container.viewContext.fetch(request).map(toEntity)
+    public func fetchAll() async throws -> [Entity] {
+        try await perform { context in
+            let request = NSFetchRequest<ManagedObject>(entityName: self.entityName)
+            return try context.fetch(request).map(self.toEntity)
+        }
     }
 
-    public func delete(id: Entity.ID) throws {
-        let context = container.viewContext
-        guard let managedObject = try fetchManagedObject(id: id, in: context) else { return }
-        context.delete(managedObject)
-        try context.save()
+    public func delete(id: Entity.ID) async throws {
+        try await perform { context in
+            guard let managedObject = try self.fetchManagedObject(id: id, in: context) else { return }
+            context.delete(managedObject)
+            try context.save()
+        }
+    }
+
+    private func perform<Value: Sendable>(
+        _ operation: @escaping (NSManagedObjectContext) throws -> Value
+    ) async throws -> Value {
+        try await withCheckedThrowingContinuation { continuation in
+            container.performBackgroundTask { context in
+                do {
+                    continuation.resume(returning: try operation(context))
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
     }
 
     private func insertManagedObject(in context: NSManagedObjectContext) throws -> ManagedObject {

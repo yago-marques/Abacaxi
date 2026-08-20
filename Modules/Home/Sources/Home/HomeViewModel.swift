@@ -47,7 +47,7 @@ final class HomeViewModel: HomeViewModelProtocol {
     }
 
     func load() async {
-        let showsSavedRecipes = (try? hasSavedRecipesUseCase.execute()) ?? false
+        let showsSavedRecipes = (try? await hasSavedRecipesUseCase.execute()) ?? false
         do {
             let attempts = try await getRemainingAttemptsUseCase.execute()
             state = HomeViewState(

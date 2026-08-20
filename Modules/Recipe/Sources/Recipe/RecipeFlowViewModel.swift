@@ -37,6 +37,7 @@ final class RecipeFlowViewModel: ObservableObject {
     @Published private(set) var feedback: RecipeFlowFeedback?
     let entryPoint: RecipeModuleFactory.EntryPoint
     private(set) var generationTask: Task<Void, Never>?
+    private(set) var savedRecipeLoadTask: Task<Void, Never>?
 
     private let generateRecipeUseCase: GenerateRecipeUseCaseProtocol
     private let getSavedRecipeUseCase: GetSavedRecipeUseCaseProtocol
@@ -56,6 +57,7 @@ final class RecipeFlowViewModel: ObservableObject {
 
     deinit {
         generationTask?.cancel()
+        savedRecipeLoadTask?.cancel()
     }
 
     func openCreation() {
@@ -90,12 +92,27 @@ final class RecipeFlowViewModel: ObservableObject {
     }
 
     func openSavedRecipe(id: String) {
-        do {
-            guard let recipe = try getSavedRecipeUseCase.execute(id: id) else { return }
-            showSavedRecipe(recipe, id: id)
-        } catch {
-            feedback = RecipeFlowFeedback(kind: .savedRecipeUnavailable)
+        guard savedRecipeLoadTask == nil else { return }
+
+        savedRecipeLoadTask = Task { [weak self] in
+            guard let self else { return }
+            defer { savedRecipeLoadTask = nil }
+
+            do {
+                guard let recipe = try await getSavedRecipeUseCase.execute(id: id), !Task.isCancelled else { return }
+                showSavedRecipe(recipe, id: id)
+            } catch is CancellationError {
+                // The view model is going away or the request was superseded.
+            } catch {
+                guard !Task.isCancelled else { return }
+                feedback = RecipeFlowFeedback(kind: .savedRecipeUnavailable)
+            }
         }
+    }
+
+    func cancelSavedRecipeLoad() {
+        savedRecipeLoadTask?.cancel()
+        savedRecipeLoadTask = nil
     }
 
     func showGeneratedRecipe(_ recipe: RecipeBusinessModel) {

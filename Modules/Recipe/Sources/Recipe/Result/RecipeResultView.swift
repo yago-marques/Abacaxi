@@ -100,6 +100,16 @@ struct RecipeResultView: View {
             guard didFailSaving else { return }
             toastRequest = DSToastRequest(message: L10n.RecipeResult.saveError, style: .error)
         }
+        .onChange(of: viewModel.didRemove) { didRemove in
+            guard didRemove else { return }
+            isRemovalConfirmationPresented = false
+            onRecipeRemoved()
+        }
+        .onChange(of: viewModel.didFailRemoving) { didFailRemoving in
+            guard didFailRemoving else { return }
+            isRemovalConfirmationPresented = false
+            toastRequest = DSToastRequest(message: L10n.RecipeResult.removeError, style: .error)
+        }
         .sheet(isPresented: $isRemovalConfirmationPresented) {
             removalConfirmationSheet
         }
@@ -170,18 +180,13 @@ struct RecipeResultView: View {
                 removeRecipe()
             }
             .buttonStyle(.dsDestructive)
+            .disabled(viewModel.isRemoving)
         }
     }
 
     private func removeRecipe() {
         guard case let .saved(id) = context else { return }
 
-        if viewModel.remove(id: id) {
-            isRemovalConfirmationPresented = false
-            onRecipeRemoved()
-        } else {
-            isRemovalConfirmationPresented = false
-            toastRequest = DSToastRequest(message: L10n.RecipeResult.removeError, style: .error)
-        }
+        viewModel.remove(id: id)
     }
 }
