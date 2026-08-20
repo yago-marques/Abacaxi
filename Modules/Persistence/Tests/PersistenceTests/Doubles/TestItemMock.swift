@@ -2,7 +2,7 @@ import CoreData
 @testable import Persistence
 import PersistenceInterfaces
 
-struct TestItemMock: PersistentEntityProtocol, Equatable {
+struct TestItemMock: PersistentEntityProtocol, Equatable, Sendable {
     let id: String
     let name: String
 }

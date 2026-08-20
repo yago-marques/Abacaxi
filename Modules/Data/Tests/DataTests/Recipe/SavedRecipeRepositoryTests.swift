@@ -6,40 +6,43 @@ import XCTest
 @testable import Data
 
 final class SavedRecipeRepositoryTests: XCTestCase {
-    func test_fetchAll_returnsSavedRecipesNewestFirst() throws {
+    func test_fetchAll_returnsSavedRecipesNewestFirst() async throws {
         let store = SavedRecipeStoreStub()
         store.entities = [olderRecipe, newerRecipe]
         let sut = SavedRecipeRepository(persistentStore: store, imageStore: RecipeImageStoreStub())
 
-        let recipes = try sut.fetchAll()
+        let recipes = try await sut.fetchAll()
 
         XCTAssertEqual(recipes.map(\.id), [newerRecipe.id, olderRecipe.id])
         XCTAssertEqual(recipes.first?.imagePath, "newest.png")
     }
 
-    func test_fetchAll_whenStoreFails_mapsToPersistenceError() {
+    func test_fetchAll_whenStoreFails_mapsToPersistenceError() async {
         let store = SavedRecipeStoreStub()
         store.fetchAllError = StubbedError.failed
         let sut = SavedRecipeRepository(persistentStore: store, imageStore: RecipeImageStoreStub())
 
-        XCTAssertThrowsError(try sut.fetchAll()) { error in
+        do {
+            _ = try await sut.fetchAll()
+            XCTFail("Expected persistence failure")
+        } catch {
             XCTAssertEqual(error as? SavedRecipeRepositoryError, .persistenceFailed)
         }
     }
 
-    func test_remove_deletesThePersistedRecipeAndItsImage() throws {
+    func test_remove_deletesThePersistedRecipeAndItsImage() async throws {
         let store = SavedRecipeStoreStub()
         store.entities = [newerRecipe]
         let imageStore = RecipeImageStoreStub()
         let sut = SavedRecipeRepository(persistentStore: store, imageStore: imageStore)
 
-        try sut.remove(id: newerRecipe.id)
+        try await sut.remove(id: newerRecipe.id)
 
         XCTAssertTrue(store.entities.isEmpty)
         XCTAssertEqual(imageStore.deletedNames, ["newest.png"])
     }
 
-    func test_save_thenFetch_roundTripsRecipeWithNutritionAndImage() throws {
+    func test_save_thenFetch_roundTripsRecipeWithNutritionAndImage() async throws {
         let store = SavedRecipeStoreStub()
         let sut = SavedRecipeRepository(persistentStore: store, imageStore: RecipeImageStoreStub())
         let recipe = makeBusinessRecipe(
@@ -47,40 +50,61 @@ final class SavedRecipeRepositoryTests: XCTestCase {
             imageData: Data("imagem".utf8)
         )
 
-        try sut.save(recipe: recipe)
-        let fetched = try sut.fetch(id: recipe.id.uuidString)
+        try await sut.save(recipe: recipe)
+        let fetched = try await sut.fetch(id: recipe.id.uuidString)
 
         XCTAssertEqual(fetched, recipe)
     }
 
-    func test_save_thenFetch_withoutNutritionAndImage_roundTripsRecipe() throws {
+    func test_save_thenFetch_withoutNutritionAndImage_roundTripsRecipe() async throws {
         let store = SavedRecipeStoreStub()
         let sut = SavedRecipeRepository(persistentStore: store, imageStore: RecipeImageStoreStub())
         let recipe = makeBusinessRecipe(nutrition: nil, imageData: nil)
 
-        try sut.save(recipe: recipe)
-        let fetched = try sut.fetch(id: recipe.id.uuidString)
+        try await sut.save(recipe: recipe)
+        let fetched = try await sut.fetch(id: recipe.id.uuidString)
 
         XCTAssertEqual(fetched, recipe)
         XCTAssertNil(try XCTUnwrap(fetched).nutrition)
         XCTAssertNil(try XCTUnwrap(fetched).imageData)
     }
 
-    func test_fetch_whenStoredIDIsNotAValidUUID_throwsPersistenceError() {
+    func test_save_whenStoreFails_removesNewlyWrittenImage() async {
+        let store = SavedRecipeStoreStub()
+        store.saveError = StubbedError.failed
+        let imageStore = RecipeImageStoreStub()
+        let sut = SavedRecipeRepository(persistentStore: store, imageStore: imageStore)
+        let recipe = makeBusinessRecipe(nutrition: nil, imageData: Data("image".utf8))
+
+        do {
+            try await sut.save(recipe: recipe)
+            XCTFail("Expected persistence failure")
+        } catch {
+            XCTAssertEqual(error as? SavedRecipeRepositoryError, .persistenceFailed)
+        }
+
+        XCTAssertEqual(imageStore.deletedNames, ["\(recipe.id.uuidString).png"])
+    }
+
+    func test_fetch_whenStoredIDIsNotAValidUUID_throwsPersistenceError() async {
         let store = SavedRecipeStoreStub()
         store.entities = [makeRecipe(id: "not-a-uuid", imagePath: nil, createdAt: .now)]
         let sut = SavedRecipeRepository(persistentStore: store, imageStore: RecipeImageStoreStub())
 
-        XCTAssertThrowsError(try sut.fetch(id: "not-a-uuid")) { error in
+        do {
+            _ = try await sut.fetch(id: "not-a-uuid")
+            XCTFail("Expected persistence failure")
+        } catch {
             XCTAssertEqual(error as? SavedRecipeRepositoryError, .persistenceFailed)
         }
     }
 
-    func test_fetch_whenRecipeDoesNotExist_returnsNil() throws {
+    func test_fetch_whenRecipeDoesNotExist_returnsNil() async throws {
         let store = SavedRecipeStoreStub()
         let sut = SavedRecipeRepository(persistentStore: store, imageStore: RecipeImageStoreStub())
 
-        XCTAssertNil(try sut.fetch(id: UUID().uuidString))
+        let fetchedRecipe = try await sut.fetch(id: UUID().uuidString)
+        XCTAssertNil(fetchedRecipe)
     }
 }
 
@@ -128,24 +152,28 @@ private extension SavedRecipeRepositoryTests {
 
 private final class SavedRecipeStoreStub: PersistentStoringProtocol {
     var entities: [SavedRecipePersistentModel] = []
+    var saveError: Error?
     var fetchAllError: Error?
 
-    func save(_ entity: SavedRecipePersistentModel) throws {
+    func save(_ entity: SavedRecipePersistentModel) async throws {
+        if let saveError {
+            throw saveError
+        }
         entities.append(entity)
     }
 
-    func fetch(id: String) throws -> SavedRecipePersistentModel? {
+    func fetch(id: String) async throws -> SavedRecipePersistentModel? {
         entities.first { $0.id == id }
     }
 
-    func fetchAll() throws -> [SavedRecipePersistentModel] {
+    func fetchAll() async throws -> [SavedRecipePersistentModel] {
         if let fetchAllError {
             throw fetchAllError
         }
         return entities
     }
 
-    func delete(id: String) throws {
+    func delete(id: String) async throws {
         entities.removeAll { $0.id == id }
     }
 }
@@ -154,17 +182,17 @@ private final class RecipeImageStoreStub: RecipeImageStoringProtocol {
     private(set) var deletedNames: [String] = []
     private var storedImages: [String: Data] = [:]
 
-    func save(_ data: Data, named name: String) throws -> String {
+    func save(_ data: Data, named name: String) async throws -> String {
         let path = "\(name).png"
         storedImages[path] = data
         return path
     }
 
-    func load(named name: String) throws -> Data? {
+    func load(named name: String) async throws -> Data? {
         storedImages[name]
     }
 
-    func delete(named name: String) throws {
+    func delete(named name: String) async throws {
         deletedNames.append(name)
     }
 }

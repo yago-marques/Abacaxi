@@ -4,7 +4,7 @@ import XCTest
 @testable import Domain
 
 final class GetSavedRecipesUseCaseTests: XCTestCase {
-    func test_execute_whenRepositoryReturnsRecipes_returnsRecipes() throws {
+    func test_execute_whenRepositoryReturnsRecipes_returnsRecipes() async throws {
         let repository = SavedRecipeRepositoryStub()
         let expected = SavedRecipeBusinessModel(
             id: "1",
@@ -17,28 +17,32 @@ final class GetSavedRecipesUseCaseTests: XCTestCase {
         repository.fetchAllResult = .success([expected])
         let sut = GetSavedRecipesUseCase(savedRecipeRepository: repository)
 
-        let recipes = try sut.execute()
+        let recipes = try await sut.execute()
 
         XCTAssertEqual(recipes, [expected])
     }
 
-    func test_execute_whenRepositoryReturnsEmptyCollection_returnsEmptyCollection() throws {
+    func test_execute_whenRepositoryReturnsEmptyCollection_returnsEmptyCollection() async throws {
         let sut = GetSavedRecipesUseCase(savedRecipeRepository: SavedRecipeRepositoryStub())
 
-        XCTAssertTrue(try sut.execute().isEmpty)
+        let recipes = try await sut.execute()
+        XCTAssertTrue(recipes.isEmpty)
     }
 
-    func test_execute_whenRepositoryFails_mapsToPersistenceError() {
+    func test_execute_whenRepositoryFails_mapsToPersistenceError() async {
         let repository = SavedRecipeRepositoryStub()
         repository.fetchAllResult = .failure(SavedRecipeRepositoryError.persistenceFailed)
         let sut = GetSavedRecipesUseCase(savedRecipeRepository: repository)
 
-        XCTAssertThrowsError(try sut.execute()) { error in
+        do {
+            _ = try await sut.execute()
+            XCTFail("Expected persistence failure")
+        } catch {
             XCTAssertEqual(error as? GetSavedRecipesError, .persistenceFailed)
         }
     }
 
-    func test_hasSavedRecipes_whenRepositoryReturnsRecipes_returnsTrue() throws {
+    func test_hasSavedRecipes_whenRepositoryReturnsRecipes_returnsTrue() async throws {
         let repository = SavedRecipeRepositoryStub()
         repository.fetchAllResult = .success([
             SavedRecipeBusinessModel(
@@ -52,21 +56,25 @@ final class GetSavedRecipesUseCaseTests: XCTestCase {
         ])
         let sut = HasSavedRecipesUseCase(savedRecipeRepository: repository)
 
-        XCTAssertTrue(try sut.execute())
+        let hasSavedRecipes = try await sut.execute()
+        XCTAssertTrue(hasSavedRecipes)
     }
 
-    func test_remove_whenRepositorySucceeds_completes() throws {
+    func test_remove_whenRepositorySucceeds_completes() async throws {
         let sut = RemoveSavedRecipeUseCase(savedRecipeRepository: SavedRecipeRepositoryStub())
 
-        XCTAssertNoThrow(try sut.execute(id: "1"))
+        try await sut.execute(id: "1")
     }
 
-    func test_remove_whenRepositoryFails_mapsToPersistenceError() {
+    func test_remove_whenRepositoryFails_mapsToPersistenceError() async {
         let repository = SavedRecipeRepositoryStub()
         repository.removeResult = .failure(SavedRecipeRepositoryError.persistenceFailed)
         let sut = RemoveSavedRecipeUseCase(savedRecipeRepository: repository)
 
-        XCTAssertThrowsError(try sut.execute(id: "1")) { error in
+        do {
+            try await sut.execute(id: "1")
+            XCTFail("Expected persistence failure")
+        } catch {
             XCTAssertEqual(error as? RemoveSavedRecipeError, .persistenceFailed)
         }
     }

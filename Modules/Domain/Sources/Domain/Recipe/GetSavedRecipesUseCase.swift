@@ -14,8 +14,8 @@ public final class GetSavedRecipesUseCase: GetSavedRecipesUseCaseProtocol {
         self.savedRecipeRepository = savedRecipeRepository
     }
 
-    public func execute() throws -> [SavedRecipeBusinessModel] {
-        do { return try savedRecipeRepository.fetchAll() } catch { throw GetSavedRecipesError.persistenceFailed }
+    public func execute() async throws -> [SavedRecipeBusinessModel] {
+        do { return try await savedRecipeRepository.fetchAll() } catch { throw GetSavedRecipesError.persistenceFailed }
     }
 }
 
@@ -32,9 +32,10 @@ public final class HasSavedRecipesUseCase: HasSavedRecipesUseCaseProtocol {
         self.savedRecipeRepository = savedRecipeRepository
     }
 
-    public func execute() throws -> Bool {
+    public func execute() async throws -> Bool {
         do {
-            return try !savedRecipeRepository.fetchAll().isEmpty
+            let recipes = try await savedRecipeRepository.fetchAll()
+            return !recipes.isEmpty
         } catch {
             throw GetSavedRecipesError.persistenceFailed
         }
@@ -54,9 +55,9 @@ public final class GetSavedRecipeUseCase: GetSavedRecipeUseCaseProtocol {
         self.savedRecipeRepository = savedRecipeRepository
     }
 
-    public func execute(id: String) throws -> RecipeBusinessModel? {
+    public func execute(id: String) async throws -> RecipeBusinessModel? {
         do {
-            return try savedRecipeRepository.fetch(id: id)
+            return try await savedRecipeRepository.fetch(id: id)
         } catch {
             throw GetSavedRecipesError.persistenceFailed
         }

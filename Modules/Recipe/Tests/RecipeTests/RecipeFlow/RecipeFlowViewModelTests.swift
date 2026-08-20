@@ -89,23 +89,53 @@ struct RecipeFlowViewModelTests {
         #expect(doubles.generateRecipeUseCase.receivedAnswers.count == 1)
     }
 
-    @Test func openSavedRecipe_whenRecipeExists_showsSavedResult() throws {
+    @Test func openSavedRecipe_whenRecipeExists_showsSavedResult() async {
         let (sut, doubles) = makeSUTAndDoubles(entryPoint: .myRecipes)
         doubles.getSavedRecipeUseCase.stubbedResult = .success(recipe)
 
         sut.openSavedRecipe(id: "saved-id")
+        let task = sut.savedRecipeLoadTask
+        await task?.value
 
         #expect(sut.resultContext == .saved(id: "saved-id"))
         #expect(sut.path == [.result])
     }
 
-    @Test func openSavedRecipe_whenUseCaseFails_emitsSavedRecipeUnavailableFeedback() {
+    @Test func openSavedRecipe_whenUseCaseFails_emitsSavedRecipeUnavailableFeedback() async {
         let (sut, doubles) = makeSUTAndDoubles(entryPoint: .myRecipes)
         doubles.getSavedRecipeUseCase.stubbedResult = .failure(StubError.failure)
 
         sut.openSavedRecipe(id: "saved-id")
+        let task = sut.savedRecipeLoadTask
+        await task?.value
 
         #expect(sut.feedback?.kind == .savedRecipeUnavailable)
+        #expect(sut.path.isEmpty)
+    }
+
+    @Test func openSavedRecipe_whileLoading_ignoresNewRequests() async {
+        let (sut, doubles) = makeSUTAndDoubles(entryPoint: .myRecipes)
+
+        sut.openSavedRecipe(id: "saved-id")
+        let task = sut.savedRecipeLoadTask
+        sut.openSavedRecipe(id: "saved-id")
+        await task?.value
+
+        #expect(doubles.getSavedRecipeUseCase.receivedIDs == ["saved-id"])
+    }
+
+    @Test func cancelSavedRecipeLoad_resetsStateWithoutFeedback() async {
+        let (sut, doubles) = makeSUTAndDoubles(entryPoint: .myRecipes)
+        doubles.getSavedRecipeUseCase.delayNanoseconds = 1_000_000_000
+
+        sut.openSavedRecipe(id: "saved-id")
+        let task = sut.savedRecipeLoadTask
+        sut.cancelSavedRecipeLoad()
+        await task?.value
+
+        #expect(sut.savedRecipeLoadTask == nil)
+        #expect(sut.feedback == nil)
+        #expect(sut.recipe == nil)
         #expect(sut.path.isEmpty)
     }
 

@@ -14,17 +14,33 @@ final class SavedRecipesViewModel: ObservableObject {
 
     @Published private(set) var state: SavedRecipesViewState = .loading
     @Published var searchText = ""
+    private(set) var loadTask: Task<Void, Never>?
 
     init(getSavedRecipesUseCase: GetSavedRecipesUseCaseProtocol) {
         self.getSavedRecipesUseCase = getSavedRecipesUseCase
     }
 
+    deinit {
+        loadTask?.cancel()
+    }
+
     func load() {
-        do {
-            let recipes = try getSavedRecipesUseCase.execute().map(SavedRecipePresentationModel.init)
-            state = recipes.isEmpty ? .empty : .content(recipes)
-        } catch {
-            state = .error
+        guard loadTask == nil else { return }
+
+        state = .loading
+        loadTask = Task { [weak self] in
+            guard let self else { return }
+            defer { loadTask = nil }
+
+            do {
+                let savedRecipes = try await getSavedRecipesUseCase.execute()
+                let recipes = savedRecipes.map(SavedRecipePresentationModel.init)
+                guard !Task.isCancelled else { return }
+                state = recipes.isEmpty ? .empty : .content(recipes)
+            } catch {
+                guard !Task.isCancelled, !(error is CancellationError) else { return }
+                state = .error
+            }
         }
     }
 

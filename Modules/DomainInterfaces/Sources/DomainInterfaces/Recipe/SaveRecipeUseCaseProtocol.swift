@@ -1,5 +1,5 @@
 public protocol SaveRecipeUseCaseProtocol {
-    func execute(recipe: RecipeBusinessModel) throws
+    func execute(recipe: RecipeBusinessModel) async throws
 }
 
 public enum SaveRecipeError: Error, Equatable {
@@ -7,7 +7,7 @@ public enum SaveRecipeError: Error, Equatable {
 }
 
 public protocol RemoveSavedRecipeUseCaseProtocol {
-    func execute(id: String) throws
+    func execute(id: String) async throws
 }
 
 public enum RemoveSavedRecipeError: Error, Equatable {

@@ -14,9 +14,9 @@ public final class SaveRecipeUseCase: SaveRecipeUseCaseProtocol {
         self.savedRecipeRepository = savedRecipeRepository
     }
 
-    public func execute(recipe: RecipeBusinessModel) throws {
+    public func execute(recipe: RecipeBusinessModel) async throws {
         do {
-            try savedRecipeRepository.save(recipe: recipe)
+            try await savedRecipeRepository.save(recipe: recipe)
         } catch {
             throw SaveRecipeError.persistenceFailed
         }
@@ -36,9 +36,9 @@ public final class RemoveSavedRecipeUseCase: RemoveSavedRecipeUseCaseProtocol {
         self.savedRecipeRepository = savedRecipeRepository
     }
 
-    public func execute(id: String) throws {
+    public func execute(id: String) async throws {
         do {
-            try savedRecipeRepository.remove(id: id)
+            try await savedRecipeRepository.remove(id: id)
         } catch {
             throw RemoveSavedRecipeError.persistenceFailed
         }

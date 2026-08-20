@@ -10,6 +10,12 @@ final class RecipeResultViewModel: ObservableObject {
     @Published private(set) var isSaving = false
     @Published private(set) var isSaved = false
     @Published private(set) var didFailSaving = false
+    @Published private(set) var isRemoving = false
+    @Published private(set) var didRemove = false
+    @Published private(set) var didFailRemoving = false
+
+    private(set) var saveTask: Task<Void, Never>?
+    private(set) var removeTask: Task<Void, Never>?
 
     init(
         recipe: RecipeBusinessModel,
@@ -28,26 +34,55 @@ final class RecipeResultViewModel: ObservableObject {
         return isSaving ? L10n.RecipeResult.saving : L10n.RecipeResult.save
     }
 
+    deinit {
+        saveTask?.cancel()
+        removeTask?.cancel()
+    }
+
     func save() {
         guard !isSaving, !isSaved else { return }
 
         isSaving = true
         didFailSaving = false
-        do {
-            try saveRecipeUseCase.execute(recipe: recipe)
-            isSaved = true
-        } catch {
-            didFailSaving = true
+        saveTask = Task { [weak self, recipe] in
+            guard let self else { return }
+            defer {
+                saveTask = nil
+                isSaving = false
+            }
+
+            do {
+                try await saveRecipeUseCase.execute(recipe: recipe)
+                guard !Task.isCancelled else { return }
+                isSaved = true
+            } catch {
+                guard !Task.isCancelled, !(error is CancellationError) else { return }
+                didFailSaving = true
+            }
         }
-        isSaving = false
     }
 
-    func remove(id: String) -> Bool {
-        do {
-            try removeSavedRecipeUseCase.execute(id: id)
-            return true
-        } catch {
-            return false
+    func remove(id: String) {
+        guard !isRemoving else { return }
+
+        isRemoving = true
+        didRemove = false
+        didFailRemoving = false
+        removeTask = Task { [weak self] in
+            guard let self else { return }
+            defer {
+                removeTask = nil
+                isRemoving = false
+            }
+
+            do {
+                try await removeSavedRecipeUseCase.execute(id: id)
+                guard !Task.isCancelled else { return }
+                didRemove = true
+            } catch {
+                guard !Task.isCancelled, !(error is CancellationError) else { return }
+                didFailRemoving = true
+            }
         }
     }
 }

@@ -29,37 +29,98 @@ public final class CoreDataStore<
         self.toEntity = toEntity
     }
 
-    public func save(_ entity: Entity) throws {
-        let context = container.viewContext
-        let managedObject = try fetchManagedObject(id: entity.id, in: context) ?? (try insertManagedObject(in: context))
-        map(entity, managedObject)
-        try context.save()
+    public func save(_ entity: Entity) async throws {
+        let entityName = entityName
+        let idKeyPath = idKeyPath
+        let map = map
+        return try await perform { context in
+            let managedObject = try Self.fetchManagedObject(
+                id: entity.id,
+                in: context,
+                entityName: entityName,
+                idKeyPath: idKeyPath
+            ) ?? (try Self.insertManagedObject(in: context, entityName: entityName))
+            map(entity, managedObject)
+            try context.save()
+        }
     }
 
-    public func fetch(id: Entity.ID) throws -> Entity? {
-        try fetchManagedObject(id: id, in: container.viewContext).map(toEntity)
+    public func fetch(id: Entity.ID) async throws -> Entity? {
+        let entityName = entityName
+        let idKeyPath = idKeyPath
+        let toEntity = toEntity
+        return try await perform { context in
+            try Self.fetchManagedObject(
+                id: id,
+                in: context,
+                entityName: entityName,
+                idKeyPath: idKeyPath
+            ).map(toEntity)
+        }
     }
 
-    public func fetchAll() throws -> [Entity] {
-        let request = NSFetchRequest<ManagedObject>(entityName: entityName)
-        return try container.viewContext.fetch(request).map(toEntity)
+    public func fetchAll() async throws -> [Entity] {
+        let entityName = entityName
+        let toEntity = toEntity
+        return try await perform { context in
+            let request = NSFetchRequest<ManagedObject>(entityName: entityName)
+            return try context.fetch(request).map(toEntity)
+        }
     }
 
-    public func delete(id: Entity.ID) throws {
-        let context = container.viewContext
-        guard let managedObject = try fetchManagedObject(id: id, in: context) else { return }
-        context.delete(managedObject)
-        try context.save()
+    public func delete(id: Entity.ID) async throws {
+        let entityName = entityName
+        let idKeyPath = idKeyPath
+        try await perform { context in
+            guard let managedObject = try Self.fetchManagedObject(
+                id: id,
+                in: context,
+                entityName: entityName,
+                idKeyPath: idKeyPath
+            ) else { return }
+            context.delete(managedObject)
+            try context.save()
+        }
     }
 
-    private func insertManagedObject(in context: NSManagedObjectContext) throws -> ManagedObject {
+    private func perform<Value: Sendable>(
+        _ operation: @escaping (NSManagedObjectContext) throws -> Value
+    ) async throws -> Value {
+        let container = container
+        return try await Self.perform(on: container, operation: operation)
+    }
+
+    private static func perform<Value: Sendable>(
+        on container: NSPersistentContainer,
+        operation: @escaping (NSManagedObjectContext) throws -> Value
+    ) async throws -> Value {
+        try await withCheckedThrowingContinuation { continuation in
+            container.performBackgroundTask { context in
+                do {
+                    continuation.resume(returning: try operation(context))
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    private static func insertManagedObject(
+        in context: NSManagedObjectContext,
+        entityName: String
+    ) throws -> ManagedObject {
         guard let description = NSEntityDescription.entity(forEntityName: entityName, in: context) else {
             throw CoreDataStoreError.entityNotFound(entityName)
         }
         return ManagedObject(entity: description, insertInto: context)
     }
 
-    private func fetchManagedObject(id: Entity.ID, in context: NSManagedObjectContext) throws -> ManagedObject? {
+    private static func fetchManagedObject(
+        id: Entity.ID,
+        in context: NSManagedObjectContext,
+        entityName: String,
+        idKeyPath: String
+    ) throws -> ManagedObject? {
         let request = NSFetchRequest<ManagedObject>(entityName: entityName)
         request.predicate = NSPredicate(format: "%K == %@", idKeyPath, id)
         request.fetchLimit = 1

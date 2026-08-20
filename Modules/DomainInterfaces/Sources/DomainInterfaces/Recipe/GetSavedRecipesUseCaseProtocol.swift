@@ -1,13 +1,13 @@
 public protocol GetSavedRecipesUseCaseProtocol {
-    func execute() throws -> [SavedRecipeBusinessModel]
+    func execute() async throws -> [SavedRecipeBusinessModel]
 }
 
 public protocol HasSavedRecipesUseCaseProtocol {
-    func execute() throws -> Bool
+    func execute() async throws -> Bool
 }
 
 public protocol GetSavedRecipeUseCaseProtocol {
-    func execute(id: String) throws -> RecipeBusinessModel?
+    func execute(id: String) async throws -> RecipeBusinessModel?
 }
 
 public enum GetSavedRecipesError: Error, Equatable {

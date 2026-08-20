@@ -6,17 +6,17 @@ final class SavedRecipeRepositoryStub: SavedRecipeRepositoryProtocol {
     var fetchResult: Result<RecipeBusinessModel?, Error> = .success(nil)
     var removeResult: Result<Void, Error> = .success(())
 
-    func save(recipe: RecipeBusinessModel) throws {}
+    func save(recipe: RecipeBusinessModel) async throws {}
 
-    func fetchAll() throws -> [SavedRecipeBusinessModel] {
+    func fetchAll() async throws -> [SavedRecipeBusinessModel] {
         try fetchAllResult.get()
     }
 
-    func fetch(id: String) throws -> RecipeBusinessModel? {
+    func fetch(id: String) async throws -> RecipeBusinessModel? {
         try fetchResult.get()
     }
 
-    func remove(id: String) throws {
+    func remove(id: String) async throws {
         try removeResult.get()
     }
 }

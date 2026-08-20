@@ -4,32 +4,50 @@ import Testing
 
 @MainActor
 struct SavedRecipesViewModelTests {
-    @Test func load_whenRecipesExist_exposesContentState() {
+    @Test func load_whenRecipesExist_exposesContentState() async {
         let useCase = GetSavedRecipesUseCaseStub()
         useCase.stubbedResult = .success([recipe])
         let sut = SavedRecipesViewModel(getSavedRecipesUseCase: useCase)
 
         sut.load()
+        let task = sut.loadTask
+        await task?.value
 
         #expect(sut.state == .content([SavedRecipePresentationModel(recipe)]))
     }
 
-    @Test func load_whenHistoryIsEmpty_exposesEmptyState() {
+    @Test func load_whenHistoryIsEmpty_exposesEmptyState() async {
         let sut = SavedRecipesViewModel(getSavedRecipesUseCase: GetSavedRecipesUseCaseStub())
 
         sut.load()
+        let task = sut.loadTask
+        await task?.value
 
         #expect(sut.state == .empty)
     }
 
-    @Test func load_whenQueryFails_exposesErrorState() {
+    @Test func load_whenQueryFails_exposesErrorState() async {
         let useCase = GetSavedRecipesUseCaseStub()
         useCase.stubbedResult = .failure(GetSavedRecipesError.persistenceFailed)
         let sut = SavedRecipesViewModel(getSavedRecipesUseCase: useCase)
 
         sut.load()
+        let task = sut.loadTask
+        await task?.value
 
         #expect(sut.state == .error)
+    }
+
+    @Test func load_whileLoading_ignoresNewRequests() async {
+        let useCase = GetSavedRecipesUseCaseStub()
+        let sut = SavedRecipesViewModel(getSavedRecipesUseCase: useCase)
+
+        sut.load()
+        let task = sut.loadTask
+        sut.load()
+        await task?.value
+
+        #expect(useCase.executeCount == 1)
     }
 
     private var recipe: SavedRecipeBusinessModel {

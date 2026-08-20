@@ -25,17 +25,26 @@ where Store.Entity == SavedRecipePersistentModel {
         self.imageStore = imageStore
     }
 
-    public func save(recipe: RecipeBusinessModel) throws {
+    public func save(recipe: RecipeBusinessModel) async throws {
         do {
-            try persistentStore.save(SavedRecipePersistentModel(recipe: recipe, imageStore: imageStore))
+            let model = try await SavedRecipePersistentModel(recipe: recipe, imageStore: imageStore)
+            do {
+                try await persistentStore.save(model)
+            } catch {
+                if let imagePath = model.imagePath {
+                    // Best effort: preserve the original persistence error.
+                    try? await imageStore.delete(named: imagePath)
+                }
+                throw error
+            }
         } catch {
             throw SavedRecipeRepositoryError.persistenceFailed
         }
     }
 
-    public func fetchAll() throws -> [SavedRecipeBusinessModel] {
+    public func fetchAll() async throws -> [SavedRecipeBusinessModel] {
         do {
-            return try persistentStore.fetchAll()
+            return try await persistentStore.fetchAll()
                 .sorted { $0.createdAt > $1.createdAt }
                 .map(SavedRecipeBusinessModel.init)
         } catch {
@@ -43,21 +52,21 @@ where Store.Entity == SavedRecipePersistentModel {
         }
     }
 
-    public func fetch(id: String) throws -> RecipeBusinessModel? {
+    public func fetch(id: String) async throws -> RecipeBusinessModel? {
         do {
-            guard let model = try persistentStore.fetch(id: id) else { return nil }
-            return try RecipeBusinessModel(model, imageStore: imageStore)
+            guard let model = try await persistentStore.fetch(id: id) else { return nil }
+            return try await RecipeBusinessModel(model, imageStore: imageStore)
         } catch {
             throw SavedRecipeRepositoryError.persistenceFailed
         }
     }
 
-    public func remove(id: String) throws {
+    public func remove(id: String) async throws {
         do {
-            let savedRecipe = try persistentStore.fetch(id: id)
-            try persistentStore.delete(id: id)
+            let savedRecipe = try await persistentStore.fetch(id: id)
+            try await persistentStore.delete(id: id)
             if let imagePath = savedRecipe?.imagePath {
-                try imageStore.delete(named: imagePath)
+                try await imageStore.delete(named: imagePath)
             }
         } catch {
             throw SavedRecipeRepositoryError.persistenceFailed
@@ -79,7 +88,7 @@ private extension SavedRecipeBusinessModel {
 }
 
 private extension SavedRecipePersistentModel {
-    init(recipe: RecipeBusinessModel, imageStore: RecipeImageStoringProtocol) throws {
+    init(recipe: RecipeBusinessModel, imageStore: RecipeImageStoringProtocol) async throws {
         id = recipe.id.uuidString
         title = recipe.title
         recipeDescription = recipe.description
@@ -88,13 +97,17 @@ private extension SavedRecipePersistentModel {
         preparationTimeMinutes = recipe.preparationTimeMinutes
         servings = recipe.servings
         nutritionData = try recipe.nutrition.map { try JSONEncoder().encode(RecipeNutritionPersistentDTO($0)) }
-        imagePath = try recipe.imageData.map { try imageStore.save($0, named: recipe.id.uuidString) }
+        if let imageData = recipe.imageData {
+            imagePath = try await imageStore.save(imageData, named: recipe.id.uuidString)
+        } else {
+            imagePath = nil
+        }
         createdAt = Date()
     }
 }
 
 private extension RecipeBusinessModel {
-    init(_ model: SavedRecipePersistentModel, imageStore: RecipeImageStoringProtocol) throws {
+    init(_ model: SavedRecipePersistentModel, imageStore: RecipeImageStoringProtocol) async throws {
         guard let id = UUID(uuidString: model.id) else {
             throw SavedRecipeRepositoryError.persistenceFailed
         }
@@ -113,7 +126,15 @@ private extension RecipeBusinessModel {
             nutrition: try model.nutritionData.map {
                 RecipeNutritionBusinessModel(try JSONDecoder().decode(RecipeNutritionPersistentDTO.self, from: $0))
             },
-            imageData: try model.imagePath.flatMap { try imageStore.load(named: $0) }
+            imageData: try await Self.imageData(from: model.imagePath, imageStore: imageStore)
         )
+    }
+
+    private static func imageData(
+        from imagePath: String?,
+        imageStore: RecipeImageStoringProtocol
+    ) async throws -> Data? {
+        guard let imagePath else { return nil }
+        return try await imageStore.load(named: imagePath)
     }
 }
