@@ -1,9 +1,3 @@
-//
-//  StubCoordinator.swift
-//  GeneralInterfaces
-//
-//  Created by Yago Marques on 10/08/26.
-//
 @testable import GeneralInterfaces
 import UIKit
 
